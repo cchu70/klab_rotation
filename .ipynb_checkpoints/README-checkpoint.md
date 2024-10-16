@@ -10,4 +10,5 @@
 2024-10-15: 
 - Set up conda environment and git repo.
 - Implemented simple SVM for MNIST classification (01_Basic-SVM-MNIST-Classification.ipynb)
-- Took a while to run grid search locally. Reduced the training set to only 1k data points.
+    - Took a while to run grid search locally. Reduced the training set to only 1k data points.
+- Implemented simple MLP using keras and parameters mentioned in the thesis document. I was unsure if he used ReLU for the hidden layer and softmax for the output. 
