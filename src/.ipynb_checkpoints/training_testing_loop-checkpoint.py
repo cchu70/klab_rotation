@@ -108,10 +108,14 @@ def full_train(
         train_losses_epoch[i] = train_losses
         val_losses_epoch[i] = val_losses
 
-        if model_update_params:
-            model.update_params()
+        model.eval()
 
-        if plot: plot_model_state(model)
+        if model_update_params:
+            decision = model.update_params()
+
+        if plot: 
+            verbose_print(f"Decision: {decision}")
+            plot_model_state(model)
         
         test_err, test_loss = test_loop(test_dataloader, model, loss_fn, verbose_print)
         test_df.loc[i] = [test_err, test_loss]
@@ -120,8 +124,26 @@ def full_train(
     return train_losses_epoch, val_losses_epoch, test_df
 
 def plot_model_state(model, layer_idx=1):
-    fig, axes = plt.subplots(1, 2)
-    axes[0].imshow(model.layers[layer_idx].A.detach().numpy(), cmap='gray')
-    axes[1].imshow(model.layers[layer_idx].W.detach().numpy(), cmap='seismic', vmax=1.0, vmin=-1.0)
-    plt.show()
+    with torch.no_grad():
+        fig, axes = plt.subplots(1, 2)
+        axes[0].imshow(model.layers[layer_idx].A.detach().numpy(), cmap='gray')
+        axes[1].imshow(model.layers[layer_idx].W.detach().numpy(), cmap='seismic', vmax=1.0, vmin=-1.0)
+        plt.show()
+    
+        # plot weight distribution
+        A_mask = model.layers[layer_idx].A.view(-1).detach().numpy()
+        A_mask= A_mask.astype(int) == 1.0
+        plt.hist(
+            model.layers[layer_idx].W.view(-1).detach().numpy()[A_mask], bins=20
+        )
+        plt.title("Active weights")
+        plt.ylabel("Num weights")
+        plt.show()
+    
+        plt.hist(
+            np.abs(model.layers[layer_idx].W.view(-1).detach().numpy())[A_mask], bins=20
+        )
+        plt.title("Absolute active weights")
+        plt.ylabel("Num weights")
+        plt.show()
 
