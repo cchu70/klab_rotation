@@ -21,7 +21,7 @@ def get_train_valid_loader(
 
     # Define transforms
     valid_transform = transforms.Compose([
-        transforms.Resize((227, 227)),
+        # transforms.Resize((227, 227)),# don't resize
         transforms.ToTensor(),
         normalize,
     ])
@@ -36,7 +36,7 @@ def get_train_valid_loader(
         ])
     else:
         train_transform = transforms.Compose([
-            transforms.Resize((227, 227)),
+            # transforms.Resize((227, 227)),
             transforms.ToTensor(),
             normalize,
         ])
@@ -95,7 +95,7 @@ def get_test_loader(
 
     # define transform
     transform = transforms.Compose([
-        transforms.Resize((227, 227)),
+        # transforms.Resize((227, 227)),
         transforms.ToTensor(),
         normalize,
     ])
