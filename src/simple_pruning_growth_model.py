@@ -108,7 +108,7 @@ class PruneGrowNetwork(nn.Module):
         x = self.flatten(x)
         for layer in self.layers:
             x = layer(x)
-            self.trace.append(x)
+            # self.trace.append(x)
         return x
 
     def synapse_size(self):
@@ -155,9 +155,101 @@ class PruneGrowNetwork(nn.Module):
                 layer.A.view(-1)[alive_idx[prune_alive_idx]] = 0.0
                 layer.W.view(-1)[alive_idx[prune_alive_idx]] = 0.0
 
-        
+
+class DrLIMPruneGrowNetwork(PruneGrowNetwork):
+    
+    def __init__(
+        self, 
+        gamma,
+        init_density,
+        num_training_iter,
+        low_mapping_dim,
+        verbose=False
+    ):
+        super().__init__(
+            gamma,
+            init_density,
+            num_training_iter,
+            verbose=False
+        )
+
+        # overwrite architecture
+        l1 = BaseDenseLayer(28*28, 16, init_density)
+        l2 = BaseDenseLayer(16, low_mapping_dim, init_density)
+        self.layers = nn.ModuleList([l1, l2])
+        self.total_size = (28*28 * 16) + (16 * 2)
+
+    def forward(self, x):
+        """
+        Siamese network
+        x: a tuple pair of data points
+        """
+        ds = []
+        # Pass both data points through the network
+        for d in x:
+            d = self.flatten(d)
+            for layer in self.layers:
+                d = layer(d)
+                # self.trace.append(x)
+            ds.append(d)
+            
+        return ds
+
+# Copied from https://jamesmccaffrey.wordpress.com/2022/03/04/contrastive-loss-function-in-pytorch/
+class ContrastiveLoss(nn.Module):
+    def __init__(self, m=2.0, reduction='mean'):
+        """
+        reduction: mean or sum
+        """
+        super().__init__()  
+        self.m = m  # margin or radius
+        self.reduction = reduction
+    
+    def forward(self, y1, y2, d=0):
+        """
+        y1: embedding of first data point, batch x final embedding dimension
+        y2: embedding of second data point, batch x final embedding dimension
+        d = 0 means y1 and y2 are supposed to be same
+        d = 1 means y1 and y2 are supposed to be different
+        """
+        euc_dist = (y1 - y2).pow(2).sum(1).sqrt() # sum along axis 1 (across rows)
+        delta = self.m - euc_dist  # distance from the margin
+        delta = torch.clamp(delta, min=0.0, max=None) # 0 if >= the margin. positive if < margin
+        L = (1 - d) * 0.5 * torch.pow(euc_dist, 2) + d * 0.5 * torch.pow(delta, 2)
+
+        if self.reduction == 'sum':
+            return torch.sum(L)
+        else:
+            return torch.mean(L)
         
 
-           
+def constrative_test_loop(dataloader, model, loss_fn, verbose_print, margin):
+    # set to evaluation mode
+    model.eval()
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    test_loss, correct = 0, 0
+    
+    with torch.no_grad(): # no gradients computed
+        for X, y in dataloader:
+            pred = model(X)
+            test_loss += loss_fn(*pred, y).item()
+
+            # distance is within margin
+            y1, y2 = pred[0], pred[1]
+            euc_dist = (y1 - y2).pow(2).sum(1).sqrt()
+            
+            # similar and within margin, disimilar and larger than margin
+            num_correct = (
+                ((euc_dist < margin) * (y == 0.0)) + ((euc_dist >= margin) * (y == 1.0)) # 1 for true, 0 for false
+            ).int()
+            correct += torch.sum(num_correct).item()
+
+    print(correct)
+    test_loss /= num_batches
+    correct /= size
+    
+    verbose_print(f"Test Error \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>3f}\n")
+    return correct, test_loss
     
         

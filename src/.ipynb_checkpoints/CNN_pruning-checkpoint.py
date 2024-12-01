@@ -10,7 +10,24 @@ from scipy.stats import bernoulli
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-class PruneNet(nn.Module):
+class Conv2dWithActivity(nn.Conv2d):
+    def __init__(
+        self, in_channels, out_channels, kernel_size, stride=1,
+        padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros'
+    ):
+        super(Conv2dWithActivity, self).__init__(
+            in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias, padding_mode)
+        
+        # Initialize the activity array
+        self.activity = torch.ones(out_channels, dtype=torch.float32)
+        self.activity.requires_grad = False
+
+    def forward(self, input):
+        # Apply the activity array to the kernel
+        kernel = self.weight * self.activity.view(self.out_channels, 1, 1, 1)
+        return self._conv_forward(input, kernel, self.bias)
+        
+class MiniAlexNet(nn.Module):
     '''
     32x32x3 -- CNN --> 32x32x64 -- Max pool --> 10x10x256 --> 2304 -> 384 -> 192 -> 10
 
@@ -26,26 +43,18 @@ class PruneNet(nn.Module):
     
     Thus, to prune kernels, we are removing some of the 64 3Dx5Wx5H kernels. In Stothers 2019 he uses the L2 norm as signal for activity of a kernel.
     '''
-    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False):
+    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1):
         super().__init__()
 
         # conv layer 1. input 32x32
-        self.conv1 = nn.Conv2d(
+        self.conv1 = Conv2dWithActivity(
             in_channels=3, out_channels=64, kernel_size=5, stride=1, padding=2
-        )
-        self.active_conv1_kernels = nn.Parameter(
-            torch.ones(64, requires_grad=False).reshape(-1, 1, 1, 1), 
-            requires_grad=False
         )
         self.bn1 = nn.BatchNorm2d(64)
         self.pool1 = nn.MaxPool2d(kernel_size=3, stride=3, padding=0) # --> 10x10
 
         # conv layer 2
-        self.conv2 = nn.Conv2d(in_channels=64, out_channels=256, kernel_size=5, stride=1, padding=1)
-        self.active_conv2_kernels = nn.Parameter(
-            torch.ones(256, requires_grad=False).reshape(-1, 1, 1, 1),
-            requires_grad=False
-        )
+        self.conv2 = Conv2dWithActivity(in_channels=64, out_channels=256, kernel_size=5, stride=1, padding=1)
         self.bn2 = nn.BatchNorm2d(256)
         self.pool2 = nn.MaxPool2d(kernel_size=3, stride=2, padding=0)
 
@@ -70,18 +79,18 @@ class PruneNet(nn.Module):
         self.verbose = verbose
         self.print = print if verbose else lambda *x, **y: None
 
-        self.prune_prob = 1.0
+        self.prune_prob = 0.0
         self.prune_prob_history = []
         self.prune_history = []
         self.conv1_kernel_count_history = []
         self.conv2_kernel_count_history = []
         self.num_training_iter = num_training_iter
 
+        self.random_seed = random_seed
+        np.random.seed(seed=random_seed)
+
     def forward(self, x):
         self.print("x = ", x.shape)
-        # with torch.no_grad():
-        #     self.conv1.weight = nn.Parameter(self.conv1.weight * self.active_conv1_kernels)
-        #     self.conv2.weight = nn.Parameter(self.conv2.weight * self.active_conv2_kernels)
 
         # 32x32x3 --> 32x32x64 --> 10x10x64
         x = F.relu(self.bn1(self.conv1(x)))
@@ -110,62 +119,71 @@ class PruneNet(nn.Module):
             assert False
         return x
 
+    def prune_activity_conv2d(self, conv2d):
+        pass
+
+    def prune_kernels(self):
+        print("no pruning")
+        pass
+
+    def update_params(self):
+        decision = bernoulli.rvs(self.prune_prob, size=1)[0]
+        self.prune_prob_history.append(self.prune_prob)
+        
+        if decision == 1.0:
+            self.prune_kernels()
+
+        # update growth parameters
+        self.prune_prob = np.min([self.prune_prob + (1.0 / self.num_training_iter), 1.0])
+        self.prune_history.append(decision)
+        self.conv1_kernel_count_history.append((self.conv1.activity.view(-1) == 1.0).sum())
+        self.conv2_kernel_count_history.append((self.conv2.activity.view(-1) == 1.0).sum())
+
+        return decision
+
+class RandomPruneNet(MiniAlexNet):
+
+    def prune_activity_conv2d(self, conv2d):
+        alive_idx = torch.argwhere(conv2d.activity == 1.0)
+        num_prune = int(len(alive_idx) * self.gamma)
+        dead_idx = alive_idx[
+            np.random.choice(np.arange(len(alive_idx)), size=num_prune, replace=False)
+        ]
+        conv2d.activity[dead_idx] = 0.0
+        
+
+    def prune_kernels(self):
+        self.print("random pruning")
+
+        for conv2d in [self.conv1, self.conv2]:
+            self.prune_activity_conv2d(conv2d)
+
+
+class ActivityPruneNet(MiniAlexNet):
+    
     def batch_kernel_L2(self, X):
         '''
         X: num kernels x in_channels x kernel width x kernel height (4 dims)
         '''
         with torch.no_grad():
             return X.pow(2).sum(dim=(1, 2, 3)).pow(0.5)
+
+    def prune_activity_conv2d(self, conv2d):
+        with torch.no_grad():
+            L2 = self.batch_kernel_L2(conv2d.weight.detach())
+            self.print(L2.shape)
+            
+            alive_idx = torch.argwhere(conv2d.activity == 1.0)
+            num_prune = int(len(alive_idx) * self.gamma)
+    
+            dead_idx = np.argsort(L2[alive_idx.view(-1)])[:num_prune]
+            conv2d.activity[alive_idx.view(-1)[dead_idx]] = 0.0
         
-    def prune_kernels_low_activity(self):
+    def prune_kernels(self):
+        self.print("activity pruning")
 
-        conv1_L2 = self.batch_kernel_L2(self.conv1.weight.detach())
-        conv2_L2 = self.batch_kernel_L2(self.conv2.weight.detach())
-
-        conv1_alive_idx = torch.argwhere(self.active_conv1_kernels.view(-1) == 1.0).view(-1)
-        num_conv1_prune = int(len(conv1_alive_idx) * self.gamma)
-        dead_conv1_kernels = np.argsort(conv1_L2[conv1_alive_idx])[:num_conv1_prune]
-        self.active_conv1_kernels.view(-1).view(-1)[conv1_alive_idx[dead_conv1_kernels]] = 0.0
-
-        conv2_alive_idx = torch.argwhere(self.active_conv2_kernels.view(-1) == 1.0).view(-1)
-        num_conv2_prune = int(len(conv2_alive_idx) * self.gamma)
-        dead_conv2_kernels = np.argsort(conv2_L2[conv2_alive_idx])[:num_conv2_prune]
-        self.active_conv2_kernels.view(-1).view(-1)[conv2_alive_idx[dead_conv2_kernels]] = 0.0
-
-    def prune_kernels_random(self):
-
-        conv1_alive_idx = torch.argwhere(self.active_conv1_kernels.view(-1) == 1.0).view(-1)
-        num_conv1_prune = int(len(conv1_alive_idx) * self.gamma)
-        dead_conv1_kernels = conv1_alive_idx[
-            np.random.choice(np.arange(len(conv1_alive_idx)), replace=False)
-        ]
-        self.active_conv1_kernels.view(-1).view(-1)[dead_conv1_kernels] = 0.0
-
-        conv2_alive_idx = torch.argwhere(self.active_conv2_kernels.view(-1) == 1.0).view(-1)
-        num_conv2_prune = int(len(conv2_alive_idx) * self.gamma)
-        dead_conv2_kernels = conv2_alive_idx[
-            np.random.choice(np.arange(len(conv2_alive_idx)), replace=False)
-        ]
-        self.active_conv2_kernels.view(-1).view(-1)[dead_conv2_kernels] = 0.0
-
-    def update_params(self, method='low_activity'):
-        decision = bernoulli.rvs(self.prune_prob, size=1)[0]
-        self.prune_prob_history.append(self.prune_prob)
-
-        if method == 'low_activity':
-            prune_fn = self.prune_kernels_low_activity
-        elif method == 'random':
-            prune_fn = self.prune_kernels_random
-
-        if decision == 0:
-            prune_fn()
-
-        # update growth parameters
-        self.prune_prob = np.max(self.prune_prob - (1.0 / self.num_training_iter), 0)
-        self.prune_history.append(decision)
-        self.conv1_kernel_count_history.append((self.active_conv1_kernels.view(-1) == 1.0).sum())
-        self.conv2_kernel_count_history.append((self.active_conv2_kernels.view(-1) == 1.0).sum())
-
-        return decision
+        for conv2d in [self.conv1, self.conv2]:
+            self.prune_activity_conv2d(conv2d)
+        
         
         

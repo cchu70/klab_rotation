@@ -22,7 +22,8 @@ def save_model_attr(model, attr_fn):
         pickle.dump(attr_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 def train_loop(
-    dataloader, model, loss_fn, optimizer, verbose_print, val_dataloader=None, val_batch_freq=10
+    dataloader, model, loss_fn, optimizer, verbose_print, val_dataloader=None, val_batch_freq=10, 
+    val_loss_fn = nn.CrossEntropyLoss(reduction='sum'), args_expand=False,
 ):
     size = len(dataloader.dataset)
     # set model to training mode
@@ -31,13 +32,14 @@ def train_loop(
 
     train_losses = dict()
     val_losses = dict()
-
-    val_loss_fn = nn.CrossEntropyLoss(reduction='sum')
     
     for batch, (X, y) in enumerate(dataloader):
         model.train()
         pred = model(X)
-        loss = loss_fn(pred, y)
+        if args_expand:
+            loss = loss_fn(*pred, y)
+        else:
+            loss = loss_fn(pred, y)
         train_losses[batch] = loss.item()
         
         # backprop
@@ -56,15 +58,27 @@ def train_loop(
             model.eval()
             with torch.no_grad():
                 val_loss = 0.
+                num_data = 0.0
                 for val_batch, (X_val, y_val) in enumerate(val_dataloader):
                     pred = model(X_val)
-                    val_loss += val_loss_fn(pred, y_val).item()
-            val_losses[batch] = val_loss / len(val_dataloader.dataset)
+                    if args_expand:
+                        val_loss += val_loss_fn(*pred, y_val).item()
+                    else:
+                        val_loss += val_loss_fn(pred, y_val).item()
+                    num_data += len(y_val)
+            val_losses[batch] = val_loss / num_data
             verbose_print(f"Val loss: {val_loss:7f}")
 
     return train_losses, val_losses
 
-def test_loop(dataloader, model, loss_fn, verbose_print):
+def test_loop(
+    dataloader, model, loss_fn, verbose_print,
+    correct_func=lambda pred, y, *args, **kwargs: (pred.argmax(1) == y).type(torch.float).sum().item(), 
+    args_expand=False
+):
+    """
+    correct_func: takes prediction as first input and expected value as second input
+    """
     # set to evaluation mode
     model.eval()
     size = len(dataloader.dataset)
@@ -74,8 +88,12 @@ def test_loop(dataloader, model, loss_fn, verbose_print):
     with torch.no_grad(): # no gradients computed
         for X, y in dataloader:
             pred = model(X)
-            test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+            if args_expand:
+                test_loss += loss_fn(*pred, y).item()
+                correct += correct_func(pred, y)
+            else:
+                test_loss += loss_fn(pred, y).item()
+                correct += correct_func(pred, y) #(pred.argmax(1) == y).type(torch.float).sum().item()
         
     test_loss /= num_batches
     correct /= size
@@ -88,9 +106,13 @@ def full_train(
     train_dataloader, val_dataloader, test_dataloader,
     learning_rate = 1e-2, # how much to update model parameters at each epoch. Speed of learning
     loss_fn = nn.CrossEntropyLoss(),
+    val_loss_fn = nn.CrossEntropyLoss(reduction='sum'),
     model_update_params=True,
     plot=False,
     verbose=True,
+    args_expand=False,
+    test_loop_func=test_loop,
+    **test_loop_kwargs,
 ):
     verbose_print = print if verbose else lambda *x: None
     
@@ -104,7 +126,7 @@ def full_train(
 
     if plot: plot_model_state(model)
     for i, t in tqdm.tqdm(enumerate(range(epochs)), desc='Epochs', total=epochs):
-        train_losses, val_losses = train_loop(train_dataloader, model, loss_fn, optimizer, verbose_print, val_dataloader)
+        train_losses, val_losses = train_loop(train_dataloader, model, loss_fn, optimizer, verbose_print, val_dataloader, val_loss_fn=val_loss_fn, args_expand=args_expand)
         train_losses_epoch[i] = train_losses
         val_losses_epoch[i] = val_losses
 
@@ -117,10 +139,10 @@ def full_train(
             verbose_print(f"Decision: {decision}")
             plot_model_state(model)
         
-        test_err, test_loss = test_loop(test_dataloader, model, loss_fn, verbose_print)
+        test_err, test_loss = test_loop_func(test_dataloader, model, val_loss_fn, verbose_print, **test_loop_kwargs)
         test_df.loc[i] = [test_err, test_loss]
     
-    print("done!")
+    verbose_print("done!")
     return train_losses_epoch, val_losses_epoch, test_df
 
 def plot_model_state(model, layer_idx=1):
@@ -146,4 +168,22 @@ def plot_model_state(model, layer_idx=1):
         plt.title("Absolute active weights")
         plt.ylabel("Num weights")
         plt.show()
+
+def format_training_outputs(train_losses_epoch, val_losses_epoch):
+    training_losses_df = pd.DataFrame(train_losses_epoch).T
+    training_losses_df.columns.name = 'batch'
+    training_losses_df.index.name = 'epoch'
+    
+    val_losses_df = pd.DataFrame(val_losses_epoch).T
+    val_losses_df.columns.name = 'batch'
+    val_losses_df.index.name = 'epoch'
+    
+    stack_training_losses_df = training_losses_df.stack().reset_index().rename(columns={0: 'loss'})
+    stack_training_losses_df.index = stack_training_losses_df['epoch'].astype(str) + '-' + stack_training_losses_df['batch'].astype(str)
+    stack_training_losses_df.index.name = 'index'
+    stack_val_losses_df = val_losses_df.stack().reset_index().rename(columns={0: 'loss'})
+    stack_val_losses_df.index = stack_val_losses_df['epoch'].astype(str) + '-' + stack_val_losses_df['batch'].astype(str)
+    stack_val_losses_df.index.name = 'index'
+
+    return stack_training_losses_df, stack_val_losses_df
 
