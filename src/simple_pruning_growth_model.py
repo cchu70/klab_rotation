@@ -11,6 +11,7 @@ class BaseDenseLayer(nn.Module):
         input_dim: int,
         output_dim: int,
         init_density: int,
+        act: nn.Module = nn.ReLU(),
     ):
         """
         W: Weight matrix
@@ -33,7 +34,7 @@ class BaseDenseLayer(nn.Module):
         self.A = nn.Parameter(A, requires_grad=False)
         self.W = nn.Parameter(W)
         self.b = nn.Parameter(torch.zeros(output_dim, dtype=torch.float))
-        self.act = nn.ReLU()
+        self.act = act
         
     def forward(self, x):
         """
@@ -84,6 +85,7 @@ class PruneGrowNetwork(nn.Module):
         gamma,
         init_density,
         num_training_iter,
+        use_grow_prune_prob=True,
         verbose=False
     ):
         super().__init__()
@@ -99,6 +101,7 @@ class PruneGrowNetwork(nn.Module):
         self.grow_prob = 1.0 # start with growth
 
         # TODO: self.register_buffer()
+        self.use_grow_prune_prob = use_grow_prune_prob
         self.grow_prune_history = []
         self.synapse_count_history = []
         self.grow_prob_history = []
@@ -121,13 +124,14 @@ class PruneGrowNetwork(nn.Module):
         decision = bernoulli.rvs(self.grow_prob, size=1)[0]
         self.grow_prob_history.append(self.grow_prob)
 
-        if decision == 1:
-            self.rand_grow()
-        elif decision == 0:
-            self.activity_prune()
+        if self.use_grow_prune_prob:
+            if decision == 1:
+                self.rand_grow()
+            elif decision == 0:
+                self.activity_prune()
+            # update growth parameters
+            self.grow_prob = np.max(self.grow_prob - (1.0 / self.num_training_iter), 0)
 
-        # update growth parameters
-        self.grow_prob = np.max(self.grow_prob - (1.0 / self.num_training_iter), 0)
         self.grow_prune_history.append(decision)
         self.synapse_count_history.append(self.synapse_size())
         return decision
@@ -164,18 +168,21 @@ class DrLIMPruneGrowNetwork(PruneGrowNetwork):
         init_density,
         num_training_iter,
         low_mapping_dim,
+        use_grow_prune_prob,
+        prediction_act: nn.Module = nn.ReLU(),
         verbose=False
     ):
         super().__init__(
             gamma,
             init_density,
             num_training_iter,
+            use_grow_prune_prob,
             verbose=False
         )
 
         # overwrite architecture
         l1 = BaseDenseLayer(28*28, 16, init_density)
-        l2 = BaseDenseLayer(16, low_mapping_dim, init_density)
+        l2 = BaseDenseLayer(16, low_mapping_dim, init_density, prediction_act) # No activation so we can get negative values
         self.layers = nn.ModuleList([l1, l2])
         self.total_size = (28*28 * 16) + (16 * 2)
 
@@ -204,6 +211,9 @@ class ContrastiveLoss(nn.Module):
         super().__init__()  
         self.m = m  # margin or radius
         self.reduction = reduction
+
+        # Use epsilon to prevent division by zero and numerical instability
+        self.eps = 1e-6
     
     def forward(self, y1, y2, d=0):
         """
@@ -211,12 +221,25 @@ class ContrastiveLoss(nn.Module):
         y2: embedding of second data point, batch x final embedding dimension
         d = 0 means y1 and y2 are supposed to be same
         d = 1 means y1 and y2 are supposed to be different
-        """
-        euc_dist = (y1 - y2).pow(2).sum(1).sqrt() # sum along axis 1 (across rows)
-        delta = self.m - euc_dist  # distance from the margin
-        delta = torch.clamp(delta, min=0.0, max=None) # 0 if >= the margin. positive if < margin
-        L = (1 - d) * 0.5 * torch.pow(euc_dist, 2) + d * 0.5 * torch.pow(delta, 2)
+        """        
 
+        # Compute Euclidean distance with numerical stability
+        euc_dist = torch.norm(y1 - y2, p=2, dim=1)
+        
+        # Clamp the distance to prevent very small values
+        euc_dist = torch.clamp(euc_dist, min=self.eps)
+        
+        # Compute margin-based loss
+        delta = torch.clamp(self.m - euc_dist, min=0.0)
+        
+        # Compute loss components
+        same_class_loss = 0.5 * torch.pow(euc_dist, 2)
+        diff_class_loss = 0.5 * torch.pow(delta, 2)
+        
+        # Combine loss based on whether points are from same or different classes
+        L = (1 - d) * same_class_loss + d * diff_class_loss
+
+        # Reduction
         if self.reduction == 'sum':
             return torch.sum(L)
         else:
@@ -245,7 +268,6 @@ def constrative_test_loop(dataloader, model, loss_fn, verbose_print, margin):
             ).int()
             correct += torch.sum(num_correct).item()
 
-    print(correct)
     test_loss /= num_batches
     correct /= size
     

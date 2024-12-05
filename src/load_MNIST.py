@@ -5,19 +5,23 @@ from torchvision.transforms import ToTensor
 from torch.utils.data import DataLoader
 import numpy as np
 
-def load_MNIST(batch_size = 2048, validation_ratio=6, download=False, root='./data', subset_frac=None, transform=ToTensor()):
+def load_MNIST(batch_size = 2048, validation_ratio=6, download=False, root='./data', subset_frac=None, transform=ToTensor(), seed=None):
+    if seed is not None:
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+
     train_data = datasets.MNIST(
         root=root,
         train=True,
         download=download,
-        transform=transform
+        transform=transform,
     )
     
     test_data = datasets.MNIST(
         root=root,
         train=False,
         download=download,
-        transform=transform
+        transform=transform,
     )
 
     if subset_frac:
@@ -51,7 +55,7 @@ import random
 
 class MNISTPairs(Dataset):
     def __init__(self, root='./', train=True, transform=None, download=True, 
-                 subset_fraction=0.1, num_pairs_per_image=2, seed=42):
+                 subset_fraction=0.1, num_pairs_per_image=2, seed=42, selected_labels=None):
         """
         Dataset of MNIST pairs with labels indicating if they're the same digit
         Args:
@@ -69,12 +73,27 @@ class MNISTPairs(Dataset):
         
         # Set random seed for reproducibility
         np.random.seed(seed)
+
+        # select labels
+        if selected_labels is not None:
+            # Create masks for each selected label
+            label_masks = [(self.mnist.targets == label).numpy() for label in selected_labels]
+            # Combine masks using logical OR
+            combined_mask = np.zeros_like(self.mnist.targets, dtype=bool)
+            for mask in label_masks:
+                combined_mask |= mask
+            
+            # Apply mask to get indices of selected labels
+            subset_indices = np.where(combined_mask)[0]
+        else:
+            # If no labels specified, use all data
+            subset_indices = np.arange(len(self.mnist))
         
         # Randomly select subset of indices
-        total_samples = len(self.mnist)
+        total_samples = len(subset_indices)
         subset_size = int(total_samples * subset_fraction)
         subset_indices = np.random.choice(
-            total_samples, 
+            subset_indices, 
             size=subset_size, 
             replace=False
         )
@@ -159,7 +178,7 @@ class MNISTPairs(Dataset):
         return (img1, img2), torch.tensor(self.pair_labels[idx], dtype=torch.float32)
 
 # Example usage:
-def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, validation_ratio=None):
+def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, validation_ratio=None, seed=None, selected_labels=None):
     """
     Creates a DataLoader for MNIST pairs
     """
@@ -174,9 +193,15 @@ def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, valid
         transform=transform,
         download=True,
         subset_fraction=subset_fraction,
+        seed=seed,
+        selected_labels=selected_labels,
     )
 
     if train and validation_ratio:
+        if seed is not None:
+            torch.manual_seed(seed)
+        np.random.seed(seed)
+
         num_val = int(len(dataset) / validation_ratio)
         val_data, train_data = torch.utils.data.random_split(dataset, [num_val, int(len(dataset) - num_val)])
 

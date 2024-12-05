@@ -36,15 +36,20 @@ def train_loop(
     for batch, (X, y) in enumerate(dataloader):
         model.train()
         pred = model(X)
+
+        # with torch.autograd.detect_anomaly():
         if args_expand:
             loss = loss_fn(*pred, y)
         else:
             loss = loss_fn(pred, y)
         train_losses[batch] = loss.item()
-        
+    
         # backprop
         loss.backward()
+
         # Check gradients
+        # print(model.layers[1].W.grad)
+        # print(train_losses[batch])
         # assert (model.layers[1].W.grad.view(-1)[torch.argwhere(model.layers[1].A.view(-1) == 0.0)] == 0.0).all()
         
         optimizer.step()
