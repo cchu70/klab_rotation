@@ -5,7 +5,7 @@ from torchvision.transforms import ToTensor
 from torch.utils.data import DataLoader
 import numpy as np
 
-def load_MNIST(batch_size = 2048, validation_ratio=6, download=False, root='./data', subset_frac=None, transform=ToTensor(), seed=None):
+def load_MNIST(batch_size = 2048, validation_ratio=6, download=False, root='./data', subset_frac=None, transform=ToTensor(), seed=None, device='cuda' if torch.cuda.is_available() else 'cpu'):
     if seed is not None:
         torch.manual_seed(seed)
         np.random.seed(seed)
@@ -34,9 +34,12 @@ def load_MNIST(batch_size = 2048, validation_ratio=6, download=False, root='./da
     num_val = int(len(train_data) / validation_ratio)
     val_data, train_data = torch.utils.data.random_split(train_data, [num_val, int(len(train_data) - num_val)])
     
-    train_dataloader = DataLoader(train_data, batch_size=batch_size)
-    val_dataloader = DataLoader(val_data, batch_size=batch_size)
-    test_dataloader = DataLoader(test_data, batch_size=batch_size)
+    train_dataloader = DataLoader(train_data, batch_size=batch_size, 
+                                pin_memory=True if device=='cuda' else False)
+    val_dataloader = DataLoader(val_data, batch_size=batch_size,
+                              pin_memory=True if device=='cuda' else False)
+    test_dataloader = DataLoader(test_data, batch_size=batch_size,
+                               pin_memory=True if device=='cuda' else False)
 
     return train_dataloader, val_dataloader, test_dataloader
 
@@ -178,7 +181,7 @@ class MNISTPairs(Dataset):
         return (img1, img2), torch.tensor(self.pair_labels[idx], dtype=torch.float32)
 
 # Example usage:
-def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, validation_ratio=None, seed=None, selected_labels=None):
+def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, validation_ratio=None, seed=None, selected_labels=None, device='cpu'):
     """
     Creates a DataLoader for MNIST pairs
     """
@@ -209,13 +212,15 @@ def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, valid
             train_data,
             batch_size=batch_size,
             shuffle=True,
-            num_workers=2
+            num_workers=2,
+            pin_memory=True if device != 'cpu' else False
         )
         val_dataloader = DataLoader(
             val_data,
             batch_size=batch_size,
             shuffle=True,
-            num_workers=2
+            num_workers=2,
+            pin_memory=True if device != 'cpu' else False
         )
 
         return train_dataloader, val_dataloader

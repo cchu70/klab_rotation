@@ -1,0 +1,57 @@
+
+CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'.
+To initialize your shell, run
+
+    $ conda init <SHELL_NAME>
+
+Currently supported shells are:
+  - bash
+  - fish
+  - tcsh
+  - xonsh
+  - zsh
+  - powershell
+
+See 'conda init --help' for more information and options.
+
+IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+
+
+/home/clc926/.conda/envs/klab_env/lib/python3.11/site-packages/torch/utils/data/dataloader.py:617: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  warnings.warn(
+
+Epochs:   0%|          | 0/100 [00:00<?, ?it/s]/home/clc926/.conda/envs/klab_env/lib/python3.11/site-packages/torch/utils/data/dataloader.py:617: UserWarning: This DataLoader will create 2 worker processes in total. Our suggested max number of worker in current system is 1, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  warnings.warn(
+
+Epochs:   0%|          | 0/100 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/08_simple_mlp_unsupervised_train.py", line 80, in <module>
+    main(
+  File "/home/clc926/Desktop/klab_rotation/08_simple_mlp_unsupervised_train.py", line 36, in main
+    train_losses_epoch, val_losses_epoch, test_df, model_state_dicts = full_train(
+                                                                       ^^^^^^^^^^^
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 135, in full_train
+    train_losses, val_losses, model_state_dict = train_loop(
+                                                 ^^^^^^^^^^^
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 38, in train_loop
+    pred = model(X)
+           ^^^^^^^^
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/clc926/Desktop/klab_rotation/src/simple_pruning_growth_model.py", line 199, in forward
+    d = layer(d)
+        ^^^^^^^^
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/clc926/Desktop/klab_rotation/src/simple_pruning_growth_model.py", line 44, in forward
+    return self.act(x @ masked_W + self.b)
+                    ~~^~~~~~~~~~
+RuntimeError: Expected all tensors to be on the same device, but found at least two devices, cpu and cuda:0! (when checking argument for argument mat2 in method wrapper_CUDA_mm)

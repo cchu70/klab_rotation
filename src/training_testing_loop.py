@@ -74,7 +74,7 @@ def train_loop(
             val_losses[batch] = val_loss / num_data
             verbose_print(f"Val loss: {val_loss:7f}")
 
-    return train_losses, val_losses
+    return train_losses, val_losses, model.state_dict()
 
 def test_loop(
     dataloader, model, loss_fn, verbose_print,
@@ -130,10 +130,15 @@ def full_train(
     val_losses_epoch = dict()
 
     if plot: plot_model_state(model)
+    model_state_dicts = {}
     for i, t in tqdm.tqdm(enumerate(range(epochs)), desc='Epochs', total=epochs):
-        train_losses, val_losses = train_loop(train_dataloader, model, loss_fn, optimizer, verbose_print, val_dataloader, val_loss_fn=val_loss_fn, args_expand=args_expand)
+        train_losses, val_losses, model_state_dict = train_loop(
+            train_dataloader, model, loss_fn, optimizer, verbose_print, 
+            val_dataloader, val_loss_fn=val_loss_fn, args_expand=args_expand
+        )
         train_losses_epoch[i] = train_losses
         val_losses_epoch[i] = val_losses
+        model_state_dicts[i] = model_state_dict
 
         model.eval()
 
@@ -148,7 +153,7 @@ def full_train(
         test_df.loc[i] = [test_err, test_loss]
     
     verbose_print("done!")
-    return train_losses_epoch, val_losses_epoch, test_df
+    return train_losses_epoch, val_losses_epoch, test_df, model_state_dicts
 
 def plot_model_state(model, layer_idx=1):
     with torch.no_grad():
