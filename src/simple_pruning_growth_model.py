@@ -145,7 +145,7 @@ class PruneGrowNetwork(nn.Module):
             rand_dead_idx = dead_idx[np.random.choice(range(len(dead_idx)), size=num_resurrect), :]
 
             for idx in rand_dead_idx:
-                layer.A[*idx] = 1
+                layer.A[idx] = 1
 
     def activity_prune(self):
         with torch.no_grad():

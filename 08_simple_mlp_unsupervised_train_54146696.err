@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/08_simple_mlp_unsupervised_train.py", line 1, in <module>
+    from src.simple_pruning_growth_model import DrLIMPruneGrowNetwork, ContrastiveLoss, constrative_test_loop
+  File "/home/clc926/Desktop/klab_rotation/src/simple_pruning_growth_model.py", line 148
+    layer.A[*idx] = 1
+                ^
+SyntaxError: invalid syntax

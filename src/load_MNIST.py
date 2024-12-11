@@ -212,14 +212,14 @@ def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, valid
             train_data,
             batch_size=batch_size,
             shuffle=True,
-            num_workers=2,
+            num_workers=1,
             pin_memory=True if device != 'cpu' else False
         )
         val_dataloader = DataLoader(
             val_data,
             batch_size=batch_size,
             shuffle=True,
-            num_workers=2,
+            num_workers=1,
             pin_memory=True if device != 'cpu' else False
         )
 
@@ -229,6 +229,6 @@ def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, valid
         dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=2
+        num_workers=1
     )
 
