@@ -41,7 +41,7 @@ class BaseDenseLayer(nn.Module):
         W is masked by A to enforce growth/pruning
         """
         masked_W = self.W * self.A
-        return self.act(x @ masked_W.to(x.device) + self.b)
+        return self.act(x @ masked_W.to(x.device) + self.b.to(x.device))
 
 class PredictionHead(nn.Module):
     """

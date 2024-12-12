@@ -6,6 +6,8 @@ import torch
 from torch import nn
 import matplotlib.pyplot as plt
 import pickle
+import os
+import time
 
 def save_model_attr(model, attr_fn):
     attr_dict = {
@@ -109,6 +111,8 @@ def test_loop(
 def full_train(
     model,
     train_dataloader, val_dataloader, test_dataloader,
+    model_training_output_dir,
+    override=False,
     learning_rate = 1e-2, # how much to update model parameters at each epoch. Speed of learning
     loss_fn = nn.CrossEntropyLoss(),
     val_loss_fn = nn.CrossEntropyLoss(reduction='sum'),
@@ -120,6 +124,14 @@ def full_train(
     **test_loop_kwargs,
 ):
     verbose_print = print if verbose else lambda *x: None
+
+    if not os.path.exists(model_training_output_dir):
+        os.makedirs(model_training_output_dir)
+        print(f"Created new directory {model_training_output_dir}")
+    elif not override:
+        raise ValueError(f"{model_training_output_dir} already exists. Set override=True or provide a different path.")
+    else:
+        print(f"{model_training_output_dir} already exists and override is True. Interrupt before training ends to prevent overwriting.")
     
     epochs = model.num_training_iter
     
@@ -153,7 +165,31 @@ def full_train(
         test_df.loc[i] = [test_err, test_loss]
     
     verbose_print("done!")
+
+    verbose_print("Save training data")
+    save_training_data(model_training_output_dir, model, train_losses_epoch, val_losses_epoch, test_df, model_state_dicts)
+
+
     return train_losses_epoch, val_losses_epoch, test_df, model_state_dicts
+
+def save_training_data(output_dir, model, train_losses_epoch, val_losses_epoch, test_df, model_state_dicts):
+    model_attr_fn = f"{output_dir}/model_attr.pkl"
+    save_model_attr(model, model_attr_fn)
+
+    test_err_loss_fn = f"{output_dir}/test_err_loss.tsv"
+    test_df.to_csv(test_err_loss_fn, sep='\t')
+
+    stack_training_losses_df, stack_val_losses_df = format_training_outputs(train_losses_epoch, val_losses_epoch)
+
+    stack_training_losses_fn = f"{output_dir}/stack_training_losses.tsv"
+    stack_val_losses_fn = f"{output_dir}/stack_val_losses.tsv"
+    
+    stack_training_losses_df.to_csv(stack_training_losses_fn, sep='\t')
+    stack_val_losses_df.to_csv(stack_val_losses_fn, sep='\t')
+
+    model_state_dicts_pkl = f"{output_dir}/model_state_dicts.pkl"
+    with open(model_state_dicts_pkl, 'wb') as fh:
+        pickle.dump(model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
 
 def plot_model_state(model, layer_idx=1):
     with torch.no_grad():

@@ -177,14 +177,34 @@ class MNISTPairs(Dataset):
             # Convert to tensor if no transform
             img1 = torch.FloatTensor(img1.copy())
             img2 = torch.FloatTensor(img2.copy())
+
+        img1 = img1
+        img2 = img2
+        label = torch.tensor(self.pair_labels[idx], dtype=torch.float32)
         
-        return (img1, img2), torch.tensor(self.pair_labels[idx], dtype=torch.float32)
+        return (img1, img2), label
 
 # Example usage:
-def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, validation_ratio=None, seed=None, selected_labels=None, device='cpu'):
+def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, validation_ratio=None, seed=None, selected_labels=None, device=None, num_workers=None):
     """
     Creates a DataLoader for MNIST pairs
+
+    Args:
+        device: Optional device to move data to. If None, uses GPU if available
+        num_workers: Number of subprocesses to use for data loading. 
+                     Defaults to 0 (no multiprocessing) when using CUDA
     """
+
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        print(f"device: {device}")
+
+    if num_workers is None:
+        # Use 0 workers when using CUDA to avoid multiprocessing issues
+        num_workers = 0 if device.type == 'cuda' else min(torch.get_num_threads(), 4)
+        print(f"num_workers: {num_workers}")
+    
+
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))  # MNIST mean and std
@@ -212,15 +232,15 @@ def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, valid
             train_data,
             batch_size=batch_size,
             shuffle=True,
-            num_workers=1,
-            pin_memory=True if device != 'cpu' else False
+            num_workers=num_workers,
+            pin_memory=device.type == 'cuda'
         )
         val_dataloader = DataLoader(
             val_data,
             batch_size=batch_size,
             shuffle=True,
-            num_workers=1,
-            pin_memory=True if device != 'cpu' else False
+            num_workers=num_workers,
+            pin_memory=device.type == 'cuda'
         )
 
         return train_dataloader, val_dataloader
@@ -229,6 +249,7 @@ def get_mnist_pairs_loader(batch_size=32, train=True, subset_fraction=0.1, valid
         dataset,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=1
+        num_workers=num_workers,
+        pin_memory=device.type == 'cuda'
     )
 

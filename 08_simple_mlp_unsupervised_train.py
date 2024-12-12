@@ -7,35 +7,49 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from torch import nn
-import argparse
+from datetime import date
 import pickle
 import os
-def main(seed, batch_size, learning_rate, subset_fraction, init_density, margin, device, output_dir):
+import argparse
+
+def main(
+    batch_size=32, subset_fraction=0.5, selected_labels=[4,9], validation_ratio=6,
+    init_density=0.5, num_training_iter=100, low_mapping_dim=2, prediction_act_type="linear", margin=5, use_grow_prune_prob=False, 
+    learning_rate=1e-3, 
+    output_dir=None,
+    seed=42,
+):
+    
+    if prediction_act_type == "linear":
+        prediction_act = lambda x: x
+    if prediction_act_type == "Tanh":
+        prediction_act = nn.Tanh()
+
+    if output_dir is None:
+        raise ValueError("Set an output directory")
     # get dataloaders
     train_pair_dataloader, val_pair_dataloader = get_mnist_pairs_loader(
-        batch_size=batch_size, train=True, subset_fraction=subset_fraction, validation_ratio=6, seed=seed, 
-        selected_labels=[4, 9], device=device
+        batch_size=batch_size, train=True, subset_fraction=subset_fraction, validation_ratio=validation_ratio, seed=seed, 
+        selected_labels=selected_labels
     )
     test_pair_dataloader = get_mnist_pairs_loader(
         batch_size=batch_size, train=False, subset_fraction=subset_fraction, 
-        selected_labels=[4, 9], device=device
+        selected_labels=selected_labels
     )
 
-    # initialize model
     DrLIM_model = DrLIMPruneGrowNetwork(
-        gamma=0.1, init_density=init_density, num_training_iter=100,
-        low_mapping_dim=2, prediction_act=lambda x: x, use_grow_prune_prob=False
+        gamma=0.1, init_density=init_density, num_training_iter=num_training_iter,
+        low_mapping_dim=low_mapping_dim, prediction_act=prediction_act, use_grow_prune_prob=use_grow_prune_prob
     )
-    DrLIM_model.to(device)
 
-    # initialize loss functions
     contrastive_loss_fn = ContrastiveLoss(m=margin) # if I am using tanh, range is between -1 and 1.
     val_contrastive_loss_fn = ContrastiveLoss(m=margin, reduction='sum')
 
-    # train model
     train_losses_epoch, val_losses_epoch, test_df, model_state_dicts = full_train(
         DrLIM_model, train_pair_dataloader, val_pair_dataloader, test_pair_dataloader,
-        learning_rate = learning_rate, 
+        model_training_output_dir=output_dir,
+        override=True,
+        learning_rate=learning_rate, 
         loss_fn=contrastive_loss_fn,
         val_loss_fn=val_contrastive_loss_fn,
         plot=False, verbose=False,
@@ -44,46 +58,40 @@ def main(seed, batch_size, learning_rate, subset_fraction, init_density, margin,
         args_expand=True,
     )
 
-    # save model attributes
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        
-    attr_fn = f"{output_dir}/model_attr.pkl"
-    save_model_attr(DrLIM_model, attr_fn)
-
-    stack_training_losses_df, stack_val_losses_df = format_training_outputs(train_losses_epoch, val_losses_epoch)
-    stack_training_losses_fn = f"{output_dir}/stack_training_losses.csv"
-    stack_val_losses_fn = f"{output_dir}/stack_val_losses.csv"
-    stack_training_losses_df.to_csv(stack_training_losses_fn, index=False)
-    stack_val_losses_df.to_csv(stack_val_losses_fn, index=False)
-    
-    test_df_fn = f"{output_dir}/test_df.csv"
-    test_df.to_csv(test_df_fn, index=False)
-
-    model_state_dicts_fn = f"{output_dir}/model_state_dicts.pkl"
-    with open(model_state_dicts_fn, 'wb') as fp:
-        pickle.dump(model_state_dicts, fp, protocol=pickle.HIGHEST_PROTOCOL)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu', help='Device to use for training (cuda/cpu)')
-    parser.add_argument('--seed', type=int, default=42, help='Random seed for reproducibility')
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training')
-    parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
-    parser.add_argument('--subset_fraction', type=float, default=0.05, help='Fraction of dataset to use')
-    parser.add_argument('--init_density', type=float, default=0.5, help='Initial density for network pruning')
-    parser.add_argument('--margin', type=float, default=0.2, help='Margin for contrastive loss')
-    parser.add_argument('--output_dir', type=str, default='./outputs', help='Output directory')
+
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size for dataloader")
+    parser.add_argument("--subset_fraction", type=int, default=0.5, help="Fraction of dataset to train on")
+    parser.add_argument("--selected_labels", default="4,9", help="Comman delimited list of single digits to classify (e.g. '4,9')")
+    parser.add_argument("--validation_ratio", type=int, default=6, help="1/N for validation")
+    parser.add_argument("--init_density", type=float, default=0.5, help="Initial density of the MLP")
+    parser.add_argument("--num_training_iter", type=int, default=100, help="Number of epochs of training. Sets pruning rate")
+    parser.add_argument("--low_mapping_dim", type=int, default=2, help="Number of dimensions for final mapping")
+    parser.add_argument("--prediction_act_type", type=str, default="linear", help="linear or tanh")
+    parser.add_argument("--margin", type=float, default=5, help="Margin size for contrastive loss")
+    parser.add_argument("--use_grow_prune_prob", type=bool, default=False, help="Whether to prune/grow or not")
+    parser.add_argument("--learning_rate", type=float, default=1e-3, help="SGD rate")
+    parser.add_argument("--output_dir", type=str, default=None, help="Output directory path")
+    parser.add_argument("--seed", type=int, default=4, help="Seed for selecting training data")
+
     args = parser.parse_args()
 
+    selected_labels = [int(i) for i in args.selected_labels.split(",")]
+
     main(
-        seed=args.seed,
         batch_size=args.batch_size,
-        learning_rate=args.lr,
         subset_fraction=args.subset_fraction,
+        selected_labels=selected_labels,
+        validation_ratio=args.validation_ratio,
         init_density=args.init_density,
+        num_training_iter=args.num_training_iter,
+        low_mapping_dim=args.low_mapping_dim,
+        prediction_act_type=args.prediction_act_type,
         margin=args.margin,
-        device=args.device,
+        use_grow_prune_prob=args.use_grow_prune_prob,
+        learning_rate=args.learning_rate,
         output_dir=args.output_dir,
+        seed=args.seed,
     )

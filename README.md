@@ -145,3 +145,8 @@ gpu-node> conda activate klab_env
 conda install matplotlib seaborn numpy
 ```
 
+Check that it works and then saved conda environment state to `.yml` file:
+```
+(klab_env) gpu-node> conda env export --name klab_env --file o2_setup/environment.gpu_interactive.yml
+```
+
