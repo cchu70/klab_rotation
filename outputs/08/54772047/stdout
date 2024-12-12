@@ -1,0 +1,5 @@
+device: cuda
+num_workers: 0
+device: cuda
+num_workers: 0
+outputs/08/%j/ already exists and override is True. Interrupt before training ends to prevent overwriting.
