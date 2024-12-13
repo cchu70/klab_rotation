@@ -274,4 +274,3 @@ def constrative_test_loop(dataloader, model, loss_fn, verbose_print, margin):
     verbose_print(f"Test Error \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>3f}\n")
     return correct, test_loss
     
-        

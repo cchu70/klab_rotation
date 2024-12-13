@@ -1,119 +1,8 @@
 from simple_pruning_growth_model import DrLIMPruneGrowNetwork, ContrastiveLoss, constrative_test_loop
-from training_testing_loop import full_train, save_model_attr, format_training_outputs
+from training_testing_loop import full_train
 from load_MNIST import get_mnist_pairs_loader
-import torch
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 from torch import nn
-from datetime import date
-import pickle
-import os
 import argparse
-from matplotlib.offsetbox import AnnotationBbox, OffsetImage
-
-class MLPTrainingResults:
-
-    def __init__(self, output_dir):
-        self.output_dir = output_dir
-        param_str = output_dir.split('/')[-1]
-        self.params = {s.split("-")[0]: s.split("-")[1] for s in param_str.split("_")}
-        self.stack_training_losses_df = pd.read_csv(f"{self.output_dir}/stack_training_losses.tsv", sep='\t')
-        self.stack_val_losses_df = pd.read_csv(f"{self.output_dir}/stack_val_losses.tsv", sep='\t')
-        self.test_df = pd.read_csv(f"{self.output_dir}/test_err_loss.tsv", sep='\t')
-
-        with open(f"{self.output_dir}/model_attr.pkl", "rb") as fh:
-            self.model_attr = pickle.load(fh)
-
-        with open(f"{self.output_dir}/model_state_dicts.pkl", "rb") as fh:
-            self.model_state_dicts = pickle.load(fh)
-
-    def plot_training_losses(self):
-        fig, ax = plt.subplots(figsize=(10, 5))
-        sns.scatterplot(self.stack_training_losses_df.reset_index(), x='index', y='loss', label='Training loss', alpha=1.0, c='gray', s=4, ax=ax)
-        sns.lineplot(self.stack_val_losses_df.reset_index(), x='index', y='loss',  label='Validation loss', c='red', ax=ax)
-        plt.xticks([])
-        plt.xlabel('Training and validation epoch/batch')
-        plt.yscale('log')
-        return fig, ax
-    
-    def plot_pruning(self):
-        fig, axes = plt.subplots(3, 1, figsize=(5, 5), sharex=True, height_ratios=[1, 5, 5])
-        axes[0].imshow(np.array(np.array(self.model_attr['grow_prune_history']).reshape(1, -1)), cmap='gray')
-        axes[0].set_yticks([])
-        axes[0].set_ylabel("Grow/prune", rotation=0, ha='right')
-
-        axes[1].plot(self.model_attr['synapse_count_history'], c='k') 
-        axes[1].set_ylabel("Total model size")
-
-        sns.scatterplot(self.test_df.reset_index(), x='epoch', y='test_err', ax=axes[2], c='k', s=5) 
-        axes[2].set_ylim(0, 1.0)
-        plt.tight_layout()
-        return fig, axes
-
-    def set_trained_model(self, epoch: int):
-        """
-        epoch: int
-            Epoch in training (see self.model_state_dicts)
-        """
-        self.DrLIM_model = DrLIMPruneGrowNetwork(
-            gamma=0.1, init_density=0.5, num_training_iter=100,
-            low_mapping_dim=2, prediction_act=lambda x: x, use_grow_prune_prob=True
-        )
-        self.DrLIM_model.load_state_dict(self.model_state_dicts[epoch])
-        self.epoch_num = epoch
-
-    def plot_pairs(self, pair_dataloader):
-        self.DrLIM_model.eval()
-        colors = {1: 'ro--', 0: 'ko--'}
-        with torch.no_grad():
-            for X, y in pair_dataloader:
-                pred = self.DrLIM_model(X)
-                for i in range(len(pred[0])):
-                    plt.plot([pred[0][i, 0], pred[1][i, 0]], [pred[0][i, 1], pred[1][i, 1]], colors[y[i].item()])
-            plt.show()
-
-    def plot_image_embeddings(self, pair_dataloader, xlim=(-6, 6), ylim=(-4, 4), image_min_value=-0.1):
-        """
-        xlim, ylim: tuple for limits
-        """
-        self.DrLIM_model.eval()
-        colors = {1: 'red', 0: 'black'}  # Solid colors for points
-        line_styles = {1: 'r--', 0: 'k--'}  # Dashed lines for connections
-        fig, ax = plt.subplots()
-
-        ax.set_xlabel('Embedding dimension 1')
-        ax.set_ylabel('Embedding dimension 2')
-        ax.set_title('2D Embeddings of Image Pairs')
-        ax.set_ylim(*ylim)
-        ax.set_xlim(*xlim)
-
-        def plot_img_embedding(img, x, y):
-            img[img < image_min_value] = np.nan
-            im = OffsetImage(img, cmap='gray_r', zoom=1.0)
-            return AnnotationBbox(im, (x, y), xycoords='data', frameon=False)
-
-        with torch.no_grad():
-            artists = []
-            for X, y in pair_dataloader:
-                pred = self.DrLIM_model(X)
-
-                for i in range(len(pred[0])):
-                    # Plot points for both images in the pair
-                    # plt.scatter(pred[0][i, 0], pred[0][i, 1], c=colors[y[i].item()], alpha=0.6)
-                    # plt.scatter(pred[1][i, 0], pred[1][i, 1], c=colors[y[i].item()], alpha=0.6)
-                    
-                    ab = plot_img_embedding(X[0][i].permute(1, 2, 0).numpy(), pred[0][i, 0].item(), pred[0][i, 1].item())
-                    ax.add_artist(ab)
-
-                    ab = plot_img_embedding(X[1][i].permute(1, 2, 0).numpy(), pred[1][i, 0].item(), pred[1][i, 1].item())
-                    ax.add_artist(ab)
-                    
-                break
-                        
-            return fig, ax
-
         
 
 def main(
@@ -175,10 +64,11 @@ if __name__ == "__main__":
     parser.add_argument("--low_mapping_dim", type=int, default=2, help="Number of dimensions for final mapping")
     parser.add_argument("--prediction_act_type", type=str, default="linear", help="linear or tanh")
     parser.add_argument("--margin", type=float, default=5, help="Margin size for contrastive loss")
-    parser.add_argument("--use_grow_prune_prob", type=bool, default=False, help="Whether to prune/grow or not")
+    parser.add_argument("--use_grow_prune_prob", action=argparse.BooleanOptionalAction, default=False, help="Whether to prune/grow or not")
     parser.add_argument("--learning_rate", type=float, default=1e-3, help="SGD rate")
     parser.add_argument("--output_dir", type=str, default=None, help="Output directory path")
     parser.add_argument("--job_id", type=str, default=None, help="sbatch script job id (%j)")
+    parser.add_argument("--desc", type=str, default=None, help="Description of the run, no spaces or special characters except _ and -")
     parser.add_argument("--seed", type=int, default=4, help="Seed for selecting training data")
 
     args = parser.parse_args()
@@ -201,7 +91,7 @@ if __name__ == "__main__":
     }
 
     parameters_dir = "_".join([f"{abbr}-{data}" for abbr, data in parameters_abbr.items()])
-    full_output_dir = f"{args.output_dir}/{parameters_dir}_sbatch-{args.job_id}"
+    full_output_dir = f"{args.output_dir}/{args.desc}/sbatch-{args.job_id}_{parameters_dir}"
 
     main(
         batch_size=args.batch_size,

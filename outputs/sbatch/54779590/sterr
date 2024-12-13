@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/simple_mlp_unsupervised_train.py", line 1, in <module>
+    from .simple_pruning_growth_model import DrLIMPruneGrowNetwork, ContrastiveLoss, constrative_test_loop
+ImportError: attempted relative import with no known parent package
+/var/spool/slurmd/job54779590/slurm_script: line 19: --subset_fraction: command not found
