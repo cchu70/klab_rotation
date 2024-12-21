@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -c 1
-#SBATCH -t 0-1:00
+#SBATCH -t 0-3:00
 #SBATCH -p gpu
 #SBATCH --gres=gpu:1
 #SBATCH --mem 5G
@@ -15,8 +15,8 @@ source /n/app/miniconda3/23.1.0/etc/profile.d/conda.sh
 conda activate klab_env
 
  # --use_grow_prune_prob False 
-python3 /home/clc926/Desktop/klab_rotation/src/simple_mlp_unsupervised_train.py --subset_fraction 1.0 \
-    --num_training_iter 250 \
+python3 /home/clc926/Desktop/klab_rotation/src/simple_mlp_unsupervised_train.py --subset_fraction 0.1 \
+    --num_training_iter 500 \
     --prediction_act_type linear \
     --margin 5 \
     --output_dir outputs/10/ \

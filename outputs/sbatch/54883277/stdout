@@ -1,0 +1,5 @@
+device: cuda
+num_workers: 0
+device: cuda
+num_workers: 0
+Created new directory outputs/10//no_prune_tanh_full/sbatch-54883277_bs-32_sf-0.1_sl-49_vr-6_id-0.5_nti-500_lmd-2_pat-Tanh_m-0.2_ugpp-False_lr-0.001_s-4

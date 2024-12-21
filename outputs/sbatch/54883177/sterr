@@ -1,0 +1,1 @@
+Epochs:   0%|          | 0/500 [00:00<?, ?it/s]Epochs:   0%|          | 1/500 [01:48<14:59:20, 108.14s/it]slurmstepd: error: *** JOB 54883177 ON compute-g-16-176 CANCELLED AT 2024-12-13T17:20:44 ***
