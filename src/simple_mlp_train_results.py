@@ -39,9 +39,10 @@ class MLPTrainingResults:
         plt.title(f"{self.desc} Training Losses")
         return fig, ax
     
-    def plot_pruning(self):
-        fig, axes = plt.subplots(3, 1, figsize=(5, 5), sharex=True, height_ratios=[1, 5, 5])
-        axes[0].imshow(np.array(np.array(self.model_attr['grow_prune_history']).reshape(1, -1)), cmap='gray')
+    def plot_pruning(self, figsize=(5, 5), height_ratios=[1, 5, 5]):
+
+        fig, axes = plt.subplots(3, 1, figsize=figsize, sharex=True, height_ratios=height_ratios)
+        axes[0].imshow(np.array(np.array(self.model_attr['grow_prune_history']).reshape(1, -1)), cmap='gray', aspect='auto')
         axes[0].set_yticks([])
         axes[0].set_ylabel("Grow/prune", rotation=0, ha='right')
 
