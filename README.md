@@ -150,3 +150,21 @@ Check that it works and then saved conda environment state to `.yml` file:
 (klab_env) gpu-node> conda env export --name klab_env --file o2_setup/environment.gpu_interactive.yml
 ```
 
+**2024-12-26 Training SBATCH script notes**
+
+To run scripts in `sbatch_scripts/` directory:
+
+```
+$ cd klab_rotation # github repo
+$ sbatch sbatch_scripts/<sbatch_script.sh>
+Submitted batch job <job_id>
+```
+
+Outputs:
+- stderr/stdout: `outputs/sbatch/<job_id>`. The `job_id` is produced when running above sbatch command
+- Training outputs/model parameters: `outputs/<notebook analysis id>/<desc>/<training parameter summary>`
+  - ex. `klab_rotation/outputs/11/no_prune_fast/sbatch-55637925_bs-32_sf-0.05_vr-6_id-0.5_nti-100_ugpp-False_lr-0.001_s-4`
+  - `11/no_prune_fast` is specified as the output director in the python script run in the `sbatch_script.sh`
+  - See python script's `parameters_abbr` variable to see how arguments are saved in the directory name (i.e. `bs` is batch size)
+
+Pass the whole training output directory to `src.training_results.MLPUnsupervisedTrainingResults(...)` or `src.training_results.CNNUnsupervisedTrainingResults(...)` to automatically parse and reload model.
