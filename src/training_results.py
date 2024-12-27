@@ -56,15 +56,20 @@ class TrainingResults:
         plt.title(f"{self.desc} Training Losses")
         return fig, ax
     
-    def plot_pruning(self, figsize=(5, 5), height_ratios=[1, 5, 5]):
+    def plot_pruning(self, figsize=(5, 5), height_ratios=[1, 5, 5], norm_size=None):
 
         fig, axes = plt.subplots(3, 1, figsize=figsize, sharex=True, height_ratios=height_ratios)
         axes[0].imshow(np.array(np.array(self.model_attr[self.prune_history_attr_name]).reshape(1, -1)), cmap='gray', aspect='auto')
         axes[0].set_yticks([])
         axes[0].set_ylabel(self.prune_ylabel, rotation=0, ha='right')
 
-        axes[1].plot(self.model_attr[self.model_size_history_attr_name], c='k') 
-        axes[1].set_ylabel("Total model size")
+        if norm_size:
+            axes[1].plot([x/norm_size for x in self.model_attr[self.model_size_history_attr_name]], c='k') 
+            axes[1].set_ylabel("Total model size")
+            axes[1].set_ylim(0, 1)
+        else:
+            axes[1].plot(self.model_attr[self.model_size_history_attr_name], c='k') 
+            axes[1].set_ylabel("Total model size")
 
         sns.scatterplot(self.test_df.reset_index(), x='epoch', y='test_err', ax=axes[2], c='k', s=5) 
         axes[2].set_ylim(0, 1.0)

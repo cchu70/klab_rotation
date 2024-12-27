@@ -14,7 +14,6 @@
 source /n/app/miniconda3/23.1.0/etc/profile.d/conda.sh
 conda activate klab_env
 
- # --use_grow_prune_prob False 
 python3 /home/clc926/Desktop/klab_rotation/src/simple_mlp_SUPERVISED_train.py --subset_fraction 0.05 \
     --num_training_iter 100 \
     --use_grow_prune_prob \

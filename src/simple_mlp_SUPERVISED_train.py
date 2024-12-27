@@ -6,7 +6,7 @@ import argparse
         
 
 def main(
-    gamma=0.1, batch_size=32, subset_fraction=0.5, selected_labels=[4,9], validation_ratio=6,
+    gamma=0.1, batch_size=32, subset_fraction=0.5, validation_ratio=6,
     init_density=0.5, num_training_iter=100, use_grow_prune_prob=False, 
     learning_rate=1e-3, 
     output_dir=None,
@@ -23,6 +23,7 @@ def main(
 
     model = PruneGrowNetwork(gamma=gamma, init_density=init_density, num_training_iter=num_training_iter, use_grow_prune_prob=use_grow_prune_prob)
 
+    print(model.synapse_size(), init_density)
 
     loss_fn = nn.CrossEntropyLoss()
     val_loss_fn = nn.CrossEntropyLoss(reduction='sum')

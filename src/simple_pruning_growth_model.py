@@ -25,7 +25,7 @@ class BaseDenseLayer(nn.Module):
         with torch.no_grad():
             num_init = int(init_density * input_dim * output_dim)
             A = torch.zeros((input_dim, output_dim), dtype=torch.float, requires_grad=False)
-            rand_sparse_idx = np.random.choice(range(int(A.view(-1).shape[0])), size=num_init)
+            rand_sparse_idx = np.random.choice(range(int(A.view(-1).shape[0])), size=num_init, replace=False)
             A.view(-1)[rand_sparse_idx] = 1.0
     
             W = nn.init.kaiming_uniform_(torch.empty((input_dim, output_dim), dtype=torch.float))
@@ -61,7 +61,7 @@ class PredictionHead(nn.Module):
         with torch.no_grad():
             num_init = int(init_density * input_dim * num_classes)
             A = torch.zeros((input_dim, num_classes), dtype=torch.float, requires_grad=False)
-            rand_sparse_idx = np.random.choice(range(int(A.view(-1).shape[0])), size=num_init)
+            rand_sparse_idx = np.random.choice(range(int(A.view(-1).shape[0])), size=num_init, replace=False)
             A.view(-1)[rand_sparse_idx] = 1.0
     
             W = nn.init.kaiming_uniform_(torch.empty((input_dim, num_classes), dtype=torch.float))
@@ -103,7 +103,7 @@ class PruneGrowNetwork(nn.Module):
         # TODO: self.register_buffer()
         self.use_grow_prune_prob = use_grow_prune_prob
         self.grow_prune_history = []
-        self.synapse_count_history = []
+        self.synapse_count_history = [self.synapse_size()]
         self.grow_prob_history = []
         self.num_training_iter = num_training_iter
 
@@ -128,9 +128,10 @@ class PruneGrowNetwork(nn.Module):
 
     def synapse_size(self):
         size = 0
-        for layer in self.layers:
-            size += layer.A.sum().item()
-        return size
+        with torch.no_grad():
+            for layer in self.layers:
+                size += layer.A.sum().item()
+            return size
 
     def update_params(self):
         decision = bernoulli.rvs(self.grow_prob, size=1)[0]
@@ -151,13 +152,12 @@ class PruneGrowNetwork(nn.Module):
     def rand_grow(self):
         
         for layer in self.layers:
-            dead_idx = torch.argwhere(layer.A == 0)
+            dead_idx = torch.argwhere(layer.A == 0.0)
 
             num_resurrect = int(np.ceil(len(dead_idx) * self.gamma))
-            rand_dead_idx = dead_idx[np.random.choice(range(len(dead_idx)), size=num_resurrect), :]
-
+            rand_dead_idx = dead_idx[np.random.choice(range(len(dead_idx)), size=num_resurrect, replace=False), :]
             for idx in rand_dead_idx:
-                layer.A[idx] = 1
+                layer.A[idx[0]][idx[1]] = 1.0
 
     def activity_prune(self):
         with torch.no_grad():
