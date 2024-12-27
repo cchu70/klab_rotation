@@ -1,0 +1,27 @@
+Epochs:   0%|          | 0/10 [00:00<?, ?it/s]Epochs:   0%|          | 0/10 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_unsupervised_train.py", line 106, in <module>
+    main(
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_unsupervised_train.py", line 48, in main
+    train_losses_epoch, val_losses_epoch, test_df, model_state_dicts = full_train(
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 147, in full_train
+    train_losses, val_losses, model_state_dict = train_loop(
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 40, in train_loop
+    pred = model(X)
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_pruning.py", line 200, in forward
+    super().forward(d)
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_pruning.py", line 96, in forward
+    x = F.relu(self.bn1(self.conv1(x)))
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_pruning.py", line 28, in forward
+    return self._conv_forward(input, kernel, self.bias)
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/torch/nn/modules/conv.py", line 549, in _conv_forward
+    return F.conv2d(
+RuntimeError: Given groups=1, weight of size [64, 3, 5, 5], expected input[32, 1, 28, 28] to have 3 channels, but got 1 channels instead

@@ -106,6 +106,18 @@ class PruneGrowNetwork(nn.Module):
         self.synapse_count_history = []
         self.grow_prob_history = []
         self.num_training_iter = num_training_iter
+
+    def get_attribute_dict(self):
+        attr_dict = {
+            'total_size': self.total_size,
+            'gamma': self.gamma,
+            'grow_prob': self.grow_prob,
+            'grow_prune_history': self.grow_prune_history,
+            'synapse_count_history': self.synapse_count_history,
+            'grow_prob_history': self.grow_prob_history,
+            'num_training_iter': self.num_training_iter,
+        }
+        return attr_dict
         
     def forward(self, x):
         x = self.flatten(x)
@@ -177,7 +189,7 @@ class DrLIMPruneGrowNetwork(PruneGrowNetwork):
             init_density,
             num_training_iter,
             use_grow_prune_prob,
-            verbose=False
+            verbose=verbose
         )
 
         # overwrite architecture

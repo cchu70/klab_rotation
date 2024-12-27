@@ -1,0 +1,5 @@
+device: cuda
+num_workers: 0
+device: cuda
+num_workers: 0
+Created new directory outputs/12//no_prune_CNN_fast/sbatch-56452014_bs-32_sf-0.05_sl-49_vr-6_nti-10_lmd-2_m-5.0_pmt-NoPrune_g-0.1_lr-0.001_s-4

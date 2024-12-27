@@ -43,12 +43,12 @@ class MiniAlexNet(nn.Module):
     
     Thus, to prune kernels, we are removing some of the 64 3Dx5Wx5H kernels. In Stothers 2019 he uses the L2 norm as signal for activity of a kernel.
     '''
-    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1):
+    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3):
         super().__init__()
 
         # conv layer 1. input 32x32
         self.conv1 = Conv2dWithActivity(
-            in_channels=3, out_channels=64, kernel_size=5, stride=1, padding=2
+            in_channels=in_channels, out_channels=64, kernel_size=5, stride=1, padding=2
         )
         self.bn1 = nn.BatchNorm2d(64)
         self.pool1 = nn.MaxPool2d(kernel_size=3, stride=3, padding=0) # --> 10x10
@@ -61,7 +61,7 @@ class MiniAlexNet(nn.Module):
         # fully connected layers
         self.fc1 = nn.Linear(256 * 3 * 3, 384)
         self.fc2 = nn.Linear(384, 192)
-        self.fc3 = nn.Linear(192, 10)
+        self.fc3 = nn.Linear(192, num_classes)
 
         self.dropout1 = nn.Dropout(0.5) # dropout2d?
         self.dropout2 = nn.Dropout(0.5)
@@ -89,6 +89,22 @@ class MiniAlexNet(nn.Module):
         self.random_seed = random_seed
         np.random.seed(seed=random_seed)
 
+        self.use_grow_prune_prob = False
+
+    def get_attribute_dict(self):
+        attr_dict = {
+            'gamma': self.gamma,
+            'prune_prob': self.prune_prob,
+            'prune_history': self.prune_history,
+            'conv1_kernel_count_history': self.conv1_kernel_count_history,
+            'conv2_kernel_count_history': self.conv2_kernel_count_history,
+            'total_conv_kernel_count_history': list(np.array(self.conv1_kernel_count_history) + np.array(self.conv2_kernel_count_history)),
+            'prune_prob_history': self.prune_prob_history,
+            'num_training_iter': self.num_training_iter,
+            'random_seed': self.random_seed
+        }
+        return attr_dict
+
     def forward(self, x):
         self.print("x = ", x.shape)
 
@@ -112,7 +128,7 @@ class MiniAlexNet(nn.Module):
         self.print("x = F.relu(self.fc1(x))=", x.shape)
         x = F.relu(self.fc2(self.dropout2(x)))
         self.print("x = F.relu(self.fc2(x))=", x.shape)
-        x = self.fc3(x) # softmax applied during loss computation
+        x = self.fc3(x) # softmax applied during loss computation if doing classification (ie 10 classes for CIFAR10)
         self.print("x = self.fc3(x)=", x.shape)
 
         if self.verbose:
@@ -130,11 +146,11 @@ class MiniAlexNet(nn.Module):
         decision = bernoulli.rvs(self.prune_prob, size=1)[0]
         self.prune_prob_history.append(self.prune_prob)
         
-        if decision == 1.0:
+        if self.use_grow_prune_prob and decision == 1.0:
             self.prune_kernels()
+            self.prune_prob = np.min([self.prune_prob + (1.0 / self.num_training_iter), 1.0])
 
         # update growth parameters
-        self.prune_prob = np.min([self.prune_prob + (1.0 / self.num_training_iter), 1.0])
         self.prune_history.append(decision)
         self.conv1_kernel_count_history.append((self.conv1.activity.view(-1) == 1.0).sum())
         self.conv2_kernel_count_history.append((self.conv2.activity.view(-1) == 1.0).sum())
@@ -142,6 +158,13 @@ class MiniAlexNet(nn.Module):
         return decision
 
 class RandomPruneNet(MiniAlexNet):
+
+    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3):
+        super().__init__(
+            num_training_iter=num_training_iter, num_classes=num_classes, gamma=gamma, 
+            verbose=verbose, random_seed=random_seed, in_channels=in_channels
+        )
+        self.use_grow_prune_prob = True
 
     def prune_activity_conv2d(self, conv2d):
         alive_idx = torch.argwhere(conv2d.activity == 1.0)
@@ -160,6 +183,13 @@ class RandomPruneNet(MiniAlexNet):
 
 
 class ActivityPruneNet(MiniAlexNet):
+
+    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3):
+        super().__init__(
+            num_training_iter=num_training_iter, num_classes=num_classes, gamma=gamma, 
+            verbose=verbose, random_seed=random_seed, in_channels=in_channels
+        )
+        self.use_grow_prune_prob = True
     
     def batch_kernel_L2(self, X):
         '''
@@ -185,5 +215,52 @@ class ActivityPruneNet(MiniAlexNet):
         for conv2d in [self.conv1, self.conv2]:
             self.prune_activity_conv2d(conv2d)
         
-        
+class DrLIMMiniAlexNet(MiniAlexNet):
+    """
+    input x is a tuple containing pairs of images/tensors
+    """
+    def forward(self, x):
+        """
+        Siamese network
+        x: a tuple pair of data points
+        """
+        ds = []
+        # Pass both data points through the network
+        for d in x:
+            output = super(DrLIMMiniAlexNet, self).forward(d)
+            ds.append(output)
+        return ds
+
+class DrLIMActivityPruneNet(RandomPruneNet):
+
+    """
+    input x is a tuple containing pairs of images/tensors
+    """
+    def forward(self, x):
+        """
+        Siamese network
+        x: a tuple pair of data points
+        """
+        ds = []
+        # Pass both data points through the network
+        for d in x:
+            output = super(DrLIMActivityPruneNet, self).forward(d)
+            ds.append(output)
+        return ds
+
+class DrLIMRandomPruneNet(ActivityPruneNet):
+    """
+    input x is a tuple containing pairs of images/tensors
+    """
+    def forward(self, x):
+        """
+        Siamese network
+        x: a tuple pair of data points
+        """
+        ds = []
+        # Pass both data points through the network
+        for d in x:
+            output = super(DrLIMRandomPruneNet, self).forward(d)
+            ds.append(output)
+        return ds  
         

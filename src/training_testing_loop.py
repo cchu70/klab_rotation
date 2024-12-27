@@ -10,15 +10,16 @@ import os
 import time
 
 def save_model_attr(model, attr_fn):
-    attr_dict = {
-        'total_size': model.total_size,
-        'gamma': model.gamma,
-        'grow_prob': model.grow_prob,
-        'grow_prune_history': model.grow_prune_history,
-        'synapse_count_history': model.synapse_count_history,
-        'grow_prob_history': model.grow_prob_history,
-        'num_training_iter': model.num_training_iter,
-    }
+    attr_dict = model.get_attribute_dict()
+    # attr_dict = {
+    #     'total_size': model.total_size,
+    #     'gamma': model.gamma,
+    #     'grow_prob': model.grow_prob,
+    #     'grow_prune_history': model.grow_prune_history,
+    #     'synapse_count_history': model.synapse_count_history,
+    #     'grow_prob_history': model.grow_prob_history,
+    #     'num_training_iter': model.num_training_iter,
+    # }
     # trace is too large
     with open(attr_fn, 'wb') as fp:
         pickle.dump(attr_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)

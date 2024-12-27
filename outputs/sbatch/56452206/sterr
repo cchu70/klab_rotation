@@ -1,0 +1,17 @@
+Epochs:   0%|          | 0/10 [00:00<?, ?it/s]Epochs:   0%|          | 0/10 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_unsupervised_train.py", line 108, in <module>
+    main(
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_unsupervised_train.py", line 50, in main
+    train_losses_epoch, val_losses_epoch, test_df, model_state_dicts = full_train(
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 148, in full_train
+    train_losses, val_losses, model_state_dict = train_loop(
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 41, in train_loop
+    pred = model(X)
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_pruning.py", line 247, in forward
+    output = super(DrLIMMiniAlexNet, self).forward(d)
+TypeError: super(type, obj): obj must be an instance or subtype of type

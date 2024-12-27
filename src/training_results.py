@@ -30,6 +30,10 @@ class TrainingResults:
         with open(f"{self.output_dir}/model_state_dicts.pkl", "rb") as fh:
             self.model_state_dicts = pickle.load(fh)
 
+        self.prune_history_attr_name = 'grow_prune_history'
+        self.prune_ylabel = 'Grow/prune'
+        self.model_size_history_attr_name = 'synapse_count_history'
+
     def plot_training_losses(self, alpha=1.0):
         fig, ax = plt.subplots(figsize=(10, 5))
         sns.scatterplot(self.stack_training_losses_df.reset_index(), x='index', y='loss', label='Training loss', alpha=alpha, c='gray', s=4, ax=ax)
@@ -43,11 +47,11 @@ class TrainingResults:
     def plot_pruning(self, figsize=(5, 5), height_ratios=[1, 5, 5]):
 
         fig, axes = plt.subplots(3, 1, figsize=figsize, sharex=True, height_ratios=height_ratios)
-        axes[0].imshow(np.array(np.array(self.model_attr['grow_prune_history']).reshape(1, -1)), cmap='gray', aspect='auto')
+        axes[0].imshow(np.array(np.array(self.model_attr[self.prune_history_attr_name]).reshape(1, -1)), cmap='gray', aspect='auto')
         axes[0].set_yticks([])
-        axes[0].set_ylabel("Grow/prune", rotation=0, ha='right')
+        axes[0].set_ylabel(self.prune_ylabel, rotation=0, ha='right')
 
-        axes[1].plot(self.model_attr['synapse_count_history'], c='k') 
+        axes[1].plot(self.model_attr[self.model_size_history_attr_name], c='k') 
         axes[1].set_ylabel("Total model size")
 
         sns.scatterplot(self.test_df.reset_index(), x='epoch', y='test_err', ax=axes[2], c='k', s=5) 
@@ -154,28 +158,27 @@ class MLPUnsupervisedTrainingResults(UnsupervisedTrainingResults):
 
 
 class CNNUnsupervisedTrainingResults(UnsupervisedTrainingResults):
+    def __init__(self, output_dir):
+        super().__init__(output_dir)
+        self.prune_history_attr_name = 'prune_history'
+        self.prune_ylabel = 'Prune'
+        self.model_size_history_attr_name = 'total_conv_kernel_count_history'
+
     def set_trained_model(self, epoch: int):
         """
         epoch: int
             Epoch in training (see self.model_state_dicts)
         """
-        prediction_act_type = self.params['pat']
-        if prediction_act_type == "linear":
-            prediction_act = lambda x: x
-        if prediction_act_type == "Tanh":
-            prediction_act = nn.Tanh()
-
-
         model_args = dict(
-            num_training_iter=self.params['nti'],
-            num_classes=self.params['lmd'],
-            gamma=self.params['g'],
+            num_training_iter=int(self.params['nti']),
+            num_classes=int(self.params['lmd']),
+            gamma=float(self.params['g']),
             verbose=False, 
-            random_seed=self.params['s'],
+            random_seed=int(self.params['s']),
             in_channels=1, # using MNIST dataset
         )
         
-        prune_model_type = self.param['pmt']
+        prune_model_type = self.params['pmt']
         if prune_model_type=="NoPrune":
             self.model = DrLIMMiniAlexNet(**model_args)
         elif prune_model_type=="Activity":
