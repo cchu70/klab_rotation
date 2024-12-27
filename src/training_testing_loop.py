@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 import time
+import gzip
 
 def save_model_attr(model, attr_fn):
     attr_dict = model.get_attribute_dict()
@@ -188,8 +189,11 @@ def save_training_data(output_dir, model, train_losses_epoch, val_losses_epoch, 
     stack_training_losses_df.to_csv(stack_training_losses_fn, sep='\t')
     stack_val_losses_df.to_csv(stack_val_losses_fn, sep='\t')
 
-    model_state_dicts_pkl = f"{output_dir}/model_state_dicts.pkl"
-    with open(model_state_dicts_pkl, 'wb') as fh:
+    model_state_dicts_pkl = f"{output_dir}/model_state_dicts.pkl.gz"
+    # with open(model_state_dicts_pkl, 'wb') as fh:
+    #     pickle.dump(model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
+
+    with gzip.open(model_state_dicts_pkl, 'wb') as fh:
         pickle.dump(model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
 
 def plot_model_state(model, layer_idx=1):

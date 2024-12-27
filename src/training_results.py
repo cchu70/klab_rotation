@@ -11,6 +11,8 @@ import seaborn as sns
 from datetime import date
 import pickle
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+import os
+import gzip
 
 # See simple_mlp_unsupervised_train
 class TrainingResults:
@@ -27,9 +29,16 @@ class TrainingResults:
         with open(f"{self.output_dir}/model_attr.pkl", "rb") as fh:
             self.model_attr = pickle.load(fh)
 
-        with open(f"{self.output_dir}/model_state_dicts.pkl", "rb") as fh:
-            self.model_state_dicts = pickle.load(fh)
+        model_state_dicts_fn = f"{self.output_dir}/model_state_dicts.pkl"
+        if not os.path.exists(model_state_dicts_fn):
+            with open(model_state_dicts_fn, "rb") as fh:
+                self.model_state_dicts = pickle.load(fh)
 
+        else:
+            model_state_dicts_fn = f"{self.output_dir}/model_state_dicts.pkl.gz"
+            with gzip.open(model_state_dicts_fn, 'rb') as fh:
+                self.model_state_dicts = pickle.load(fh)
+        
         self.prune_history_attr_name = 'grow_prune_history'
         self.prune_ylabel = 'Grow/prune'
         self.model_size_history_attr_name = 'synapse_count_history'
