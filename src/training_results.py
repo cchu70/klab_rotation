@@ -13,6 +13,7 @@ import pickle
 from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import os
 import gzip
+import warnings
 
 # See simple_mlp_unsupervised_train
 class TrainingResults:
@@ -29,15 +30,17 @@ class TrainingResults:
         with open(f"{self.output_dir}/model_attr.pkl", "rb") as fh:
             self.model_attr = pickle.load(fh)
 
-        model_state_dicts_fn = f"{self.output_dir}/model_state_dicts.pkl"
-        if not os.path.exists(model_state_dicts_fn):
-            with open(model_state_dicts_fn, "rb") as fh:
+        model_state_dicts_pkl = f"{self.output_dir}/model_state_dicts.pkl"
+        model_state_dicts_gz = f"{self.output_dir}/model_state_dicts.pkl.gz"
+        if os.path.exists(model_state_dicts_pkl):
+            with open(model_state_dicts_pkl, "rb") as fh:
                 self.model_state_dicts = pickle.load(fh)
-
+    
+        elif os.path.exists(model_state_dicts_gz):
+            with gzip.open(model_state_dicts_gz, 'rb') as fh:
+                self.model_state_dicts = pickle.load(fh)
         else:
-            model_state_dicts_fn = f"{self.output_dir}/model_state_dicts.pkl.gz"
-            with gzip.open(model_state_dicts_fn, 'rb') as fh:
-                self.model_state_dicts = pickle.load(fh)
+            warnings.warn(f"Directory does not contain model state file. Not loading model_state_dicts")
         
         self.prune_history_attr_name = 'grow_prune_history'
         self.prune_ylabel = 'Grow/prune'

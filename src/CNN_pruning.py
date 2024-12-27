@@ -146,8 +146,9 @@ class MiniAlexNet(nn.Module):
         decision = bernoulli.rvs(self.prune_prob, size=1)[0]
         self.prune_prob_history.append(self.prune_prob)
         
-        if self.use_grow_prune_prob and decision == 1.0:
-            self.prune_kernels()
+        if self.use_grow_prune_prob:
+            if decision == 1.0:
+                self.prune_kernels()
             self.prune_prob = np.min([self.prune_prob + (1.0 / self.num_training_iter), 1.0])
 
         # update growth parameters
