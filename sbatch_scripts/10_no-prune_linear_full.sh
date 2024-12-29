@@ -16,7 +16,7 @@ conda activate klab_env
 
  # --use_grow_prune_prob False 
 python3 /home/clc926/Desktop/klab_rotation/src/simple_mlp_unsupervised_train.py --subset_fraction 0.1 \
-    --num_training_iter 500 \
+    --num_training_iter 1000 \
     --prediction_act_type linear \
     --margin 5 \
     --init_density 1.0 \

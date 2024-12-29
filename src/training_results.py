@@ -107,6 +107,7 @@ class MLPSupervisedTrainingResults(TrainingResults):
             num_training_iter=float(self.params['nti']), use_grow_prune_prob=bool(float(self.params['ugpp']))
         )
         self.model.load_state_dict(self.model_state_dicts[epoch])
+        self.model.eval()
         self.epoch_num = epoch 
 
 class UnsupervisedTrainingResults(TrainingResults):
@@ -179,12 +180,12 @@ class MLPUnsupervisedTrainingResults(UnsupervisedTrainingResults):
         if prediction_act_type == "Tanh":
             prediction_act = nn.Tanh()
             
-        print(prediction_act)
         self.model = DrLIMPruneGrowNetwork(
             gamma=0.1, init_density=float(self.params['id']), num_training_iter=int(self.params['nti']),
             low_mapping_dim=int(self.params['lmd']), prediction_act=prediction_act, use_grow_prune_prob=bool(self.params['ugpp'])
         )
         self.model.load_state_dict(self.model_state_dicts[epoch])
+        self.model.eval()
         self.epoch_num = epoch 
 
 
@@ -220,4 +221,5 @@ class CNNUnsupervisedTrainingResults(UnsupervisedTrainingResults):
             raise ValueError(f"prune_model={prune_model_type} is not valid. Options are []'None', 'Activity', 'Random']")
 
         self.model.load_state_dict(self.model_state_dicts[epoch])
+        self.model.eval()
         self.epoch_num = epoch 

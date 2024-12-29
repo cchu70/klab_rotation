@@ -145,7 +145,6 @@ def full_train(
 
     if plot: plot_model_state(model)
     model_state_dicts = {}
-    print(f"model_update_params={model_update_params}")
     for i, t in tqdm.tqdm(enumerate(range(epochs)), desc='Epochs', total=epochs):
         train_losses, val_losses, model_state_dict = train_loop(
             train_dataloader, model, loss_fn, optimizer, verbose_print, 

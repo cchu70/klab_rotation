@@ -1,0 +1,5 @@
+device: cuda
+num_workers: 0
+device: cuda
+num_workers: 0
+Created new directory outputs/10//no_prune_linear_full/sbatch-56701540_bs-32_sf-0.1_sl-49_vr-6_id-1.0_nti-1000_lmd-2_pat-linear_m-5.0_ugpp-False_lr-0.0001_s-4
