@@ -1,0 +1,18 @@
+prediction_act=Tanh()
+device: cuda
+num_workers: 0
+device: cuda
+num_workers: 0
+model=DrLIMPruneGrowNetwork(
+  (layers): ModuleList(
+    (0): BaseDenseLayer(
+      (act): ReLU()
+    )
+    (1): BaseDenseLayer(
+      (act): Tanh()
+    )
+  )
+  (flatten): Flatten(start_dim=1, end_dim=-1)
+)
+Created new directory outputs/10//no_prune_tanh_fast/sbatch-56698186_bs-32_sf-0.05_sl-49_vr-6_id-1.0_nti-100_lmd-2_pat-Tanh_m-0.5_ugpp-False_lr-0.0001_s-4
+model_update_params=True
