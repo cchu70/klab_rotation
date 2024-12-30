@@ -86,6 +86,21 @@ class TrainingResults:
         plt.title(f"{self.desc} Pruning History")
         return fig, axes
     
+    def plot_model_size_vs_performance(self, test_err_col='test_accuracy', **figkwargs):
+        fig, ax = plt.subplots(**figkwargs)
+        sns.scatterplot(
+            x=self.model_attr[self.model_size_history_attr_name][1:],
+            y=self.test_df[test_err_col],
+            s=5,
+            ax=ax
+            # hue=prune_full_results.test_df['test_accuracy'],
+            # palette='rocket_r'
+        )
+        plt.ylabel("Test Accuracy")
+        plt.xlabel("Model size")
+        return fig, ax
+
+    
     def set_trained_model(self, epoch: int):
         pass
     
