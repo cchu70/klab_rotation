@@ -15,6 +15,7 @@ from matplotlib.offsetbox import AnnotationBbox, OffsetImage
 import os
 import gzip
 import warnings
+from sklearn import metrics
 
 # See simple_mlp_unsupervised_train
 class TrainingResults:
@@ -96,19 +97,33 @@ class MLPSupervisedTrainingResults(TrainingResults):
         epoch: int
             Epoch in training (see self.model_state_dicts)
         """
-        prediction_act_type = self.params['pat']
-        if prediction_act_type == "linear":
-            prediction_act = lambda x: x
-        if prediction_act_type == "Tanh":
-            prediction_act = nn.Tanh()
             
         self.model = PruneGrowNetwork(
             gamma=0.1, init_density=float(self.params['id']), 
-            num_training_iter=float(self.params['nti']), use_grow_prune_prob=bool(float(self.params['ugpp']))
+            num_training_iter=float(self.params['nti']), use_grow_prune_prob=bool(self.params['ugpp'])
         )
         self.model.load_state_dict(self.model_state_dicts[epoch])
         self.model.eval()
         self.epoch_num = epoch 
+
+    def plot_confusion_matrix(self, dataloader, labels=np.arange(10)):
+        with torch.no_grad():
+            self.model.eval() # not training
+            ys = []
+            pred_ys = []
+            for X, y in dataloader:
+                pred_y = self.model(X)
+                ys.append(y)
+                pred_ys.append(torch.argmax(pred_y, axis=1))
+
+        ys = torch.cat(ys)
+        pred_ys = torch.cat(pred_ys)
+
+        confusion_matrix = metrics.confusion_matrix(y_true=ys, y_pred=pred_ys, labels=labels)
+        disp = metrics.ConfusionMatrixDisplay(confusion_matrix, display_labels=labels)
+        disp.plot()
+        plt.title(f"Epoch {self.epoch_num}")
+        plt.show()
 
 class UnsupervisedTrainingResults(TrainingResults):
     def plot_pairs(self, pair_dataloader, figsize=(5, 5)):

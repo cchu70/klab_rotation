@@ -9,6 +9,7 @@ import pickle
 import os
 import time
 import gzip
+import copy
 
 def save_model_attr(model, attr_fn):
     attr_dict = model.get_attribute_dict()
@@ -152,7 +153,7 @@ def full_train(
         )
         train_losses_epoch[i] = train_losses
         val_losses_epoch[i] = val_losses
-        model_state_dicts[i] = model_state_dict
+        model_state_dicts[i] = copy.deepcopy(model_state_dict)
 
         model.eval()
 
