@@ -5,6 +5,10 @@ import torch
 from torch import nn
 from scipy.stats import bernoulli
 
+class Linear(torch.nn.Module):
+    # a linear activation function based on y=x
+    def forward(self, output):return output
+
 class BaseDenseLayer(nn.Module):
     def __init__(
         self,
@@ -150,7 +154,6 @@ class PruneGrowNetwork(nn.Module):
         return decision
 
     def rand_grow(self):
-        
         for layer in self.layers:
             dead_idx = torch.argwhere(layer.A == 0.0)
 
@@ -181,7 +184,7 @@ class DrLIMPruneGrowNetwork(PruneGrowNetwork):
         num_training_iter,
         low_mapping_dim,
         use_grow_prune_prob,
-        prediction_act: nn.Module = nn.ReLU(),
+        prediction_act,
         verbose=False
     ):
         super().__init__(

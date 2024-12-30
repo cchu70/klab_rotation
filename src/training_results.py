@@ -7,6 +7,7 @@ from torch import nn
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import seaborn as sns
 from datetime import date
 import pickle
@@ -18,11 +19,18 @@ import warnings
 # See simple_mlp_unsupervised_train
 class TrainingResults:
 
-    def __init__(self, output_dir):
+    def __init__(self, output_dir, desc_split_idx=-2, param_split_idx=-1, param_dict=None, desc=None):
         self.output_dir = output_dir
-        self.desc = output_dir.split('/')[-2]
-        param_str = output_dir.split('/')[-1]
-        self.params = {s.split("-")[0]: s.split("-")[1] for s in param_str.split("_")}
+        if desc is not None:
+            self.desc = desc
+        else:
+            self.desc = output_dir.split('/')[desc_split_idx]
+
+        if param_dict is not None:
+            self.params = param_dict
+        else:            
+            param_str = output_dir.split('/')[param_split_idx]
+            self.params = {s.split("-")[0]: s.split("-")[1] for s in param_str.split("_")}
         self.stack_training_losses_df = pd.read_csv(f"{self.output_dir}/stack_training_losses.tsv", sep='\t')
         self.stack_val_losses_df = pd.read_csv(f"{self.output_dir}/stack_val_losses.tsv", sep='\t')
         self.test_df = pd.read_csv(f"{self.output_dir}/test_err_loss.tsv", sep='\t')
@@ -56,7 +64,7 @@ class TrainingResults:
         plt.title(f"{self.desc} Training Losses")
         return fig, ax
     
-    def plot_pruning(self, figsize=(5, 5), height_ratios=[1, 5, 5], norm_size=None):
+    def plot_pruning(self, figsize=(5, 5), height_ratios=[1, 5, 5], norm_size=None, test_err_col='test_err'):
 
         fig, axes = plt.subplots(3, 1, figsize=figsize, sharex=True, height_ratios=height_ratios)
         axes[0].imshow(np.array(np.array(self.model_attr[self.prune_history_attr_name]).reshape(1, -1)), cmap='gray', aspect='auto')
@@ -64,14 +72,14 @@ class TrainingResults:
         axes[0].set_ylabel(self.prune_ylabel, rotation=0, ha='right')
 
         if norm_size:
-            axes[1].plot([x/norm_size for x in self.model_attr[self.model_size_history_attr_name]], c='k') 
+            axes[1].plot([x/norm_size for x in self.model_attr[self.model_size_history_attr_name][1:]], c='k') 
             axes[1].set_ylabel("Total model size")
             axes[1].set_ylim(0, 1)
         else:
-            axes[1].plot(self.model_attr[self.model_size_history_attr_name], c='k') 
+            axes[1].plot(self.model_attr[self.model_size_history_attr_name][1:], c='k') 
             axes[1].set_ylabel("Total model size")
 
-        sns.scatterplot(self.test_df.reset_index(), x='epoch', y='test_err', ax=axes[2], c='k', s=5) 
+        sns.scatterplot(self.test_df.reset_index(), x='epoch', y=test_err_col, ax=axes[2], c='k', s=5) 
         axes[2].set_ylim(0, 1.0)
         plt.tight_layout()
         plt.title(f"{self.desc} Pruning History")
@@ -102,24 +110,30 @@ class MLPSupervisedTrainingResults(TrainingResults):
         self.epoch_num = epoch 
 
 class UnsupervisedTrainingResults(TrainingResults):
-    def plot_pairs(self, pair_dataloader):
+    def plot_pairs(self, pair_dataloader, figsize=(5, 5)):
         self.model.eval()
         colors = {1: 'ro--', 0: 'ko--'}
+        fig, ax = plt.subplots(figsize=figsize)
         with torch.no_grad():
             for X, y in pair_dataloader:
                 pred = self.model(X)
                 for i in range(len(pred[0])):
-                    plt.plot([pred[0][i, 0], pred[1][i, 0]], [pred[0][i, 1], pred[1][i, 1]], colors[y[i].item()])
-            plt.show()
+                    ax.plot([pred[0][i, 0], pred[1][i, 0]], [pred[0][i, 1], pred[1][i, 1]], colors[y[i].item()])
 
-    def plot_image_embeddings(self, pair_dataloader, xlim=(-6, 6), ylim=(-4, 4), image_min_value=-0.1, num_pairs_per_batch=5):
+            custom_lines = [Line2D([0], [0], color='r', linestyle='--'),
+                            Line2D([0], [0], color='k', linestyle='--')]
+            plt.legend(custom_lines, ['Similar', 'Dissimilar'], title='Data pairs')
+            
+            return fig, ax
+
+    def plot_image_embeddings(self, pair_dataloader, xlim=(-6, 6), ylim=(-4, 4), image_min_value=-0.1, num_pairs_per_batch=5, figsize=(5, 5)):
         """
         xlim, ylim: tuple for limits
         """
         self.model.eval()
         colors = {1: 'red', 0: 'black'}  # Solid colors for points
         line_styles = {1: 'r--', 0: 'k--'}  # Dashed lines for connections
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=figsize)
 
         ax.set_xlabel('Embedding dimension 1')
         ax.set_ylabel('Embedding dimension 2')
@@ -133,7 +147,6 @@ class UnsupervisedTrainingResults(TrainingResults):
             return AnnotationBbox(im, (x, y), xycoords='data', frameon=False)
 
         with torch.no_grad():
-            artists = []
             for X, y in pair_dataloader:
                 pred = self.model(X)
 
@@ -166,6 +179,7 @@ class MLPUnsupervisedTrainingResults(UnsupervisedTrainingResults):
         if prediction_act_type == "Tanh":
             prediction_act = nn.Tanh()
             
+        print(prediction_act)
         self.model = DrLIMPruneGrowNetwork(
             gamma=0.1, init_density=float(self.params['id']), num_training_iter=int(self.params['nti']),
             low_mapping_dim=int(self.params['lmd']), prediction_act=prediction_act, use_grow_prune_prob=bool(self.params['ugpp'])

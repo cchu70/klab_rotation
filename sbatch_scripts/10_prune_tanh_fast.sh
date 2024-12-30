@@ -18,6 +18,7 @@ conda activate klab_env
 python3 /home/clc926/Desktop/klab_rotation/src/simple_mlp_unsupervised_train.py --subset_fraction 0.05 \
     --num_training_iter 100 \
     --prediction_act_type Tanh \
+    --learning_rate 0.0001 \
     --margin 0.2 \
     --use_grow_prune_prob \
     --output_dir outputs/10/ \

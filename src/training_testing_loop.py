@@ -138,13 +138,14 @@ def full_train(
     epochs = model.num_training_iter
     
     optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate) # make sure model is the right instance
-    test_df = pd.DataFrame(index=np.arange(epochs), columns=['test_err', 'test_loss'])
+    test_df = pd.DataFrame(index=np.arange(epochs), columns=['test_accuracy', 'test_loss'])
     test_df.index.name = 'epoch'
     train_losses_epoch = dict()
     val_losses_epoch = dict()
 
     if plot: plot_model_state(model)
     model_state_dicts = {}
+    print(f"model_update_params={model_update_params}")
     for i, t in tqdm.tqdm(enumerate(range(epochs)), desc='Epochs', total=epochs):
         train_losses, val_losses, model_state_dict = train_loop(
             train_dataloader, model, loss_fn, optimizer, verbose_print, 

@@ -1,4 +1,4 @@
-from simple_pruning_growth_model import DrLIMPruneGrowNetwork, ContrastiveLoss, constrative_test_loop
+from simple_pruning_growth_model import DrLIMPruneGrowNetwork, ContrastiveLoss, constrative_test_loop, Linear
 from training_testing_loop import full_train
 from load_MNIST import get_mnist_pairs_loader
 from torch import nn
@@ -14,9 +14,11 @@ def main(
 ):
     
     if prediction_act_type == "linear":
-        prediction_act = lambda x: x
+        prediction_act = Linear()
     if prediction_act_type == "Tanh":
         prediction_act = nn.Tanh()
+
+    print(f"prediction_act={prediction_act}")
 
     if output_dir is None:
         raise ValueError("Set an output directory")
@@ -34,6 +36,7 @@ def main(
         gamma=0.1, init_density=init_density, num_training_iter=num_training_iter,
         low_mapping_dim=low_mapping_dim, prediction_act=prediction_act, use_grow_prune_prob=use_grow_prune_prob
     )
+    print(f"model={DrLIM_model}")
 
     contrastive_loss_fn = ContrastiveLoss(m=margin) # if I am using tanh, range is between -1 and 1.
     val_contrastive_loss_fn = ContrastiveLoss(m=margin, reduction='sum')

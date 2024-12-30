@@ -19,6 +19,8 @@ python3 /home/clc926/Desktop/klab_rotation/src/simple_mlp_unsupervised_train.py 
     --num_training_iter 500 \
     --prediction_act_type linear \
     --margin 5 \
+    --init_density 1.0 \
+    --learning_rate 0.0001 \
     --output_dir outputs/10/ \
     --job_id $SLURM_JOB_ID \
     --desc no_prune_linear_full

@@ -19,6 +19,7 @@ python3 /home/clc926/Desktop/klab_rotation/src/simple_mlp_unsupervised_train.py 
     --num_training_iter 500 \
     --prediction_act_type Tanh \
     --margin 0.2 \
+    --learning_rate 0.0001 \
     --use_grow_prune_prob \
     --output_dir outputs/10/ \
     --job_id $SLURM_JOB_ID \

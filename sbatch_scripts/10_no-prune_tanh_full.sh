@@ -18,7 +18,9 @@ conda activate klab_env
 python3 /home/clc926/Desktop/klab_rotation/src/simple_mlp_unsupervised_train.py --subset_fraction 0.1 \
     --num_training_iter 500 \
     --prediction_act_type Tanh \
-    --margin 0.2 \
+    --margin 0.5 \
+    --init_density 1.0 \
+    --learning_rate 0.0001 \
     --output_dir outputs/10/ \
     --job_id $SLURM_JOB_ID \
     --desc no_prune_tanh_full
