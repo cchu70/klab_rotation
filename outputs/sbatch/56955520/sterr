@@ -1,0 +1,11 @@
+Epochs:   0%|          | 0/10 [00:00<?, ?it/s]Epochs:   0%|          | 0/10 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_unsupervised_train.py", line 109, in <module>
+    main(
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_unsupervised_train.py", line 50, in main
+    train_losses_epoch, val_losses_epoch, test_df, model_state_dicts = full_train(
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 161, in full_train
+    train_losses, val_losses, model_state_dict = train_loop(
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 44, in train_loop
+    X = X.to(device)
+AttributeError: 'list' object has no attribute 'to'

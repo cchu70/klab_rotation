@@ -19,8 +19,8 @@ class Conv2dWithActivity(nn.Conv2d):
             in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias, padding_mode)
         
         # Initialize the activity array
-        self.activity = torch.ones(out_channels, dtype=torch.float32)
-        self.activity.requires_grad = False
+        activity = torch.ones(out_channels, dtype=torch.float32)
+        self.activity = nn.Parameter(activity, requires_grad=False)
 
     def forward(self, input):
         # Apply the activity array to the kernel
@@ -49,22 +49,22 @@ class MiniAlexNet(nn.Module):
         # conv layer 1. input 32x32
         self.conv1 = Conv2dWithActivity(
             in_channels=in_channels, out_channels=64, kernel_size=5, stride=1, padding=2
-        ).to(device)
-        self.bn1 = nn.BatchNorm2d(64).to(device)
-        self.pool1 = nn.MaxPool2d(kernel_size=3, stride=3, padding=0).to(device) # --> 10x10
+        ) #.to(device)
+        self.bn1 = nn.BatchNorm2d(64) #.to(device)
+        self.pool1 = nn.MaxPool2d(kernel_size=3, stride=3, padding=0) #.to(device) # --> 10x10
 
         # conv layer 2
-        self.conv2 = Conv2dWithActivity(in_channels=64, out_channels=256, kernel_size=5, stride=1, padding=1).to(device)
-        self.bn2 = nn.BatchNorm2d(256).to(device)
-        self.pool2 = nn.MaxPool2d(kernel_size=3, stride=2, padding=0).to(device)
+        self.conv2 = Conv2dWithActivity(in_channels=64, out_channels=256, kernel_size=5, stride=1, padding=1) #.to(device)
+        self.bn2 = nn.BatchNorm2d(256) #.to(device)
+        self.pool2 = nn.MaxPool2d(kernel_size=3, stride=2, padding=0) #.to(device)
 
         # fully connected layers
-        self.fc1 = nn.Linear(256 * 3 * 3, 384).to(device)
-        self.fc2 = nn.Linear(384, 192).to(device)
-        self.fc3 = nn.Linear(192, num_classes).to(device)
+        self.fc1 = nn.Linear(256 * 3 * 3, 384) #.to(device)
+        self.fc2 = nn.Linear(384, 192) #.to(device)
+        self.fc3 = nn.Linear(192, num_classes) #.to(device)
 
-        self.dropout1 = nn.Dropout(0.5).to(device) # dropout2d?
-        self.dropout2 = nn.Dropout(0.5).to(device)
+        self.dropout1 = nn.Dropout(0.5) #.to(device) # dropout2d?
+        self.dropout2 = nn.Dropout(0.5) #.to(device)
 
         # initalization
         torch.nn.init.xavier_uniform_(self.conv1.weight)
@@ -107,10 +107,6 @@ class MiniAlexNet(nn.Module):
 
     def forward(self, x):
         self.print("x = ", x.shape)
-
-        print("Input device:", x.device)
-        print("Conv1 device:", self.conv1(x).device)
-        print("BN1 weight device:", self.bn1.weight.device)
 
         # 32x32x3 --> 32x32x64 --> 10x10x64
         x = F.relu(self.bn1(self.conv1(x)))

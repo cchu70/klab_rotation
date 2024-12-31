@@ -73,6 +73,8 @@ def train_loop(
                 val_loss = 0.
                 num_data = 0.0
                 for val_batch, (X_val, y_val) in enumerate(val_dataloader):
+                    X_val = X_val.to(device)
+                    y_val = y_val.to(device)
                     pred = model(X_val)
                     if args_expand:
                         val_loss += val_loss_fn(*pred, y_val).item()

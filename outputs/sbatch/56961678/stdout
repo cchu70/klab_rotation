@@ -1,0 +1,2 @@
+device=cpu
+Created new directory outputs/13/random_prune_CNN_fast/sbatch-56961678_ds-MNIST_ic-1_bs-32_sf-0.05_vr-6_nti-10_lmd-10_pmt-Random_g-0.1_lr-0.001_s-4

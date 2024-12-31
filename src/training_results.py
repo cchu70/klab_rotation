@@ -281,7 +281,7 @@ class CNNUnsupervisedTrainingResults(UnsupervisedTrainingResults):
         self.prune_ylabel = 'Prune'
         self.model_size_history_attr_name = 'total_conv_kernel_count_history'
 
-    def set_trained_model(self, epoch: int):
+    def set_trained_model(self, epoch: int, device='cpu'):
         """
         epoch: int
             Epoch in training (see self.model_state_dicts)
@@ -293,6 +293,7 @@ class CNNUnsupervisedTrainingResults(UnsupervisedTrainingResults):
             verbose=False, 
             random_seed=int(self.params['s']),
             in_channels=1, # using MNIST dataset
+            device=device,
         )
         
         prune_model_type = self.params['pmt']

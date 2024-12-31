@@ -1,5 +1,0 @@
-outputs/13//no_prune_CNN_fast/sbatch-TEST_ds-MNIST_bs-32_sf-0.05_sl-49_vr-6_nti-5_lmd-10_m-5.0_pmt-NoPrune_g-0.1_lr-0.001_s-4/model_state_dicts/0.model_state_dicts.pkl.gz
-outputs/13//no_prune_CNN_fast/sbatch-TEST_ds-MNIST_bs-32_sf-0.05_sl-49_vr-6_nti-5_lmd-10_m-5.0_pmt-NoPrune_g-0.1_lr-0.001_s-4/model_state_dicts/1.model_state_dicts.pkl.gz
-outputs/13//no_prune_CNN_fast/sbatch-TEST_ds-MNIST_bs-32_sf-0.05_sl-49_vr-6_nti-5_lmd-10_m-5.0_pmt-NoPrune_g-0.1_lr-0.001_s-4/model_state_dicts/2.model_state_dicts.pkl.gz
-outputs/13//no_prune_CNN_fast/sbatch-TEST_ds-MNIST_bs-32_sf-0.05_sl-49_vr-6_nti-5_lmd-10_m-5.0_pmt-NoPrune_g-0.1_lr-0.001_s-4/model_state_dicts/3.model_state_dicts.pkl.gz
-outputs/13//no_prune_CNN_fast/sbatch-TEST_ds-MNIST_bs-32_sf-0.05_sl-49_vr-6_nti-5_lmd-10_m-5.0_pmt-NoPrune_g-0.1_lr-0.001_s-4/model_state_dicts/4.model_state_dicts.pkl.gz
