@@ -1,0 +1,105 @@
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+device=cuda:0
+Created new directory outputs/13/CIFAR10_activity_prune_CNN_full/sbatch-57035272_ds-CIFAR10_ic-3_bs-32_sf-0.05_vr-6_nti-100_np-75_lmd-10_pmt-Activity_g-0.1_lr-0.001_s-4
+No Pruning: curr =0 <= num_pretraining=75
+No Pruning: curr =1 <= num_pretraining=75
+No Pruning: curr =2 <= num_pretraining=75
+No Pruning: curr =3 <= num_pretraining=75
+No Pruning: curr =4 <= num_pretraining=75
+No Pruning: curr =5 <= num_pretraining=75
+No Pruning: curr =6 <= num_pretraining=75
+No Pruning: curr =7 <= num_pretraining=75
+No Pruning: curr =8 <= num_pretraining=75
+No Pruning: curr =9 <= num_pretraining=75
+No Pruning: curr =10 <= num_pretraining=75
+No Pruning: curr =11 <= num_pretraining=75
+No Pruning: curr =12 <= num_pretraining=75
+No Pruning: curr =13 <= num_pretraining=75
+No Pruning: curr =14 <= num_pretraining=75
+No Pruning: curr =15 <= num_pretraining=75
+No Pruning: curr =16 <= num_pretraining=75
+No Pruning: curr =17 <= num_pretraining=75
+No Pruning: curr =18 <= num_pretraining=75
+No Pruning: curr =19 <= num_pretraining=75
+No Pruning: curr =20 <= num_pretraining=75
+No Pruning: curr =21 <= num_pretraining=75
+No Pruning: curr =22 <= num_pretraining=75
+No Pruning: curr =23 <= num_pretraining=75
+No Pruning: curr =24 <= num_pretraining=75
+No Pruning: curr =25 <= num_pretraining=75
+No Pruning: curr =26 <= num_pretraining=75
+No Pruning: curr =27 <= num_pretraining=75
+No Pruning: curr =28 <= num_pretraining=75
+No Pruning: curr =29 <= num_pretraining=75
+No Pruning: curr =30 <= num_pretraining=75
+No Pruning: curr =31 <= num_pretraining=75
+No Pruning: curr =32 <= num_pretraining=75
+No Pruning: curr =33 <= num_pretraining=75
+No Pruning: curr =34 <= num_pretraining=75
+No Pruning: curr =35 <= num_pretraining=75
+No Pruning: curr =36 <= num_pretraining=75
+No Pruning: curr =37 <= num_pretraining=75
+No Pruning: curr =38 <= num_pretraining=75
+No Pruning: curr =39 <= num_pretraining=75
+No Pruning: curr =40 <= num_pretraining=75
+No Pruning: curr =41 <= num_pretraining=75
+No Pruning: curr =42 <= num_pretraining=75
+No Pruning: curr =43 <= num_pretraining=75
+No Pruning: curr =44 <= num_pretraining=75
+No Pruning: curr =45 <= num_pretraining=75
+No Pruning: curr =46 <= num_pretraining=75
+No Pruning: curr =47 <= num_pretraining=75
+No Pruning: curr =48 <= num_pretraining=75
+No Pruning: curr =49 <= num_pretraining=75
+No Pruning: curr =50 <= num_pretraining=75
+No Pruning: curr =51 <= num_pretraining=75
+No Pruning: curr =52 <= num_pretraining=75
+No Pruning: curr =53 <= num_pretraining=75
+No Pruning: curr =54 <= num_pretraining=75
+No Pruning: curr =55 <= num_pretraining=75
+No Pruning: curr =56 <= num_pretraining=75
+No Pruning: curr =57 <= num_pretraining=75
+No Pruning: curr =58 <= num_pretraining=75
+No Pruning: curr =59 <= num_pretraining=75
+No Pruning: curr =60 <= num_pretraining=75
+No Pruning: curr =61 <= num_pretraining=75
+No Pruning: curr =62 <= num_pretraining=75
+No Pruning: curr =63 <= num_pretraining=75
+No Pruning: curr =64 <= num_pretraining=75
+No Pruning: curr =65 <= num_pretraining=75
+No Pruning: curr =66 <= num_pretraining=75
+No Pruning: curr =67 <= num_pretraining=75
+No Pruning: curr =68 <= num_pretraining=75
+No Pruning: curr =69 <= num_pretraining=75
+No Pruning: curr =70 <= num_pretraining=75
+No Pruning: curr =71 <= num_pretraining=75
+No Pruning: curr =72 <= num_pretraining=75
+No Pruning: curr =73 <= num_pretraining=75
+No Pruning: curr =74 <= num_pretraining=75
+No Pruning: curr =75 <= num_pretraining=75
+Pruning: curr =76 > num_pretraining=75
+Pruning: curr =77 > num_pretraining=75
+Pruning: curr =78 > num_pretraining=75
+Pruning: curr =79 > num_pretraining=75
+Pruning: curr =80 > num_pretraining=75
+Pruning: curr =81 > num_pretraining=75
+Pruning: curr =82 > num_pretraining=75
+Pruning: curr =83 > num_pretraining=75
+Pruning: curr =84 > num_pretraining=75
+Pruning: curr =85 > num_pretraining=75
+Pruning: curr =86 > num_pretraining=75
+Pruning: curr =87 > num_pretraining=75
+Pruning: curr =88 > num_pretraining=75
+Pruning: curr =89 > num_pretraining=75
+Pruning: curr =90 > num_pretraining=75
+Pruning: curr =91 > num_pretraining=75
+Pruning: curr =92 > num_pretraining=75
+Pruning: curr =93 > num_pretraining=75
+Pruning: curr =94 > num_pretraining=75
+Pruning: curr =95 > num_pretraining=75
+Pruning: curr =96 > num_pretraining=75
+Pruning: curr =97 > num_pretraining=75
+Pruning: curr =98 > num_pretraining=75
+Pruning: curr =99 > num_pretraining=75

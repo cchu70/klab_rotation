@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 113, in <module>
+    main(
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 61, in main
+    model, train_dataloader, val_dataloader, test_dataloader,
+UnboundLocalError: local variable 'train_dataloader' referenced before assignment

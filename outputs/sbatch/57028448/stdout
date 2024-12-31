@@ -1,0 +1,5 @@
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+device=cuda:0
+Created new directory outputs/13/CIFAR10_activity_prune_CNN_fast/sbatch-57028448_ds-CIFAR10_ic-3_bs-32_sf-0.05_vr-6_nti-10_lmd-10_pmt-Activity_g-0.1_lr-0.001_s-4

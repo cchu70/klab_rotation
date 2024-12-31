@@ -1,0 +1,5 @@
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+device=cuda:0
+Created new directory outputs/13/CIFAR10_random_prune_CNN_full/sbatch-57035273_ds-CIFAR10_ic-3_bs-32_sf-0.05_vr-6_nti-100_np-75_lmd-10_pmt-Random_g-0.1_lr-0.001_s-4

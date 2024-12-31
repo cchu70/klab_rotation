@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 118, in <module>
+    main(
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 53, in main
+    model = RandomPruneNet(**model_args)
+TypeError: RandomPruneNet.__init__() got an unexpected keyword argument 'num_pretraining'

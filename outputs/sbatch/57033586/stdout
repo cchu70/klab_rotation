@@ -1,0 +1,15 @@
+Files already downloaded and verified
+Files already downloaded and verified
+Files already downloaded and verified
+device=cpu
+Created new directory outputs/13/CIFAR10_random_prune_CNN_fast/sbatch-57033586_ds-CIFAR10_ic-3_bs-32_sf-0.05_vr-6_nti-10_np-5_lmd-10_pmt-Random_g-0.1_lr-0.001_s-4
+No Pruning: curr =0 <= num_pretraining=5
+No Pruning: curr =1 <= num_pretraining=5
+No Pruning: curr =2 <= num_pretraining=5
+No Pruning: curr =3 <= num_pretraining=5
+No Pruning: curr =4 <= num_pretraining=5
+No Pruning: curr =5 <= num_pretraining=5
+Pruning: curr =6 > num_pretraining=5
+Pruning: curr =7 > num_pretraining=5
+Pruning: curr =8 > num_pretraining=5
+Pruning: curr =9 > num_pretraining=5
