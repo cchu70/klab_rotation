@@ -153,8 +153,8 @@ class MiniAlexNet(nn.Module):
 
         # update growth parameters
         self.prune_history.append(decision)
-        self.conv1_kernel_count_history.append((self.conv1.activity.view(-1) == 1.0).sum())
-        self.conv2_kernel_count_history.append((self.conv2.activity.view(-1) == 1.0).sum())
+        self.conv1_kernel_count_history.append((self.conv1.activity.view(-1) == 1.0).sum().item())
+        self.conv2_kernel_count_history.append((self.conv2.activity.view(-1) == 1.0).sum().item())
 
         return decision
 

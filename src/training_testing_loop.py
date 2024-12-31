@@ -206,13 +206,18 @@ def save_training_data(output_dir, model, train_losses_epoch, val_losses_epoch, 
     stack_training_losses_df.to_csv(stack_training_losses_fn, sep='\t')
     stack_val_losses_df.to_csv(stack_val_losses_fn, sep='\t')
 
+    # move model states to cpu
+    cpu_model_state_dicts = {}
+    for epoch, d in model_state_dicts.items():
+        cpu_model_state_dicts[epoch] = {k: v.cpu() for k, v in d.items()}
+
     if split_model_states:
         model_state_dicts_pkl_dir = f"{output_dir}/model_state_dicts"
         if not os.path.exists(model_state_dicts_pkl_dir):
             os.mkdir(model_state_dicts_pkl_dir)
 
         fns = []
-        for epoch, d in model_state_dicts.items():
+        for epoch, d in cpu_model_state_dicts.items():
             epoch_state_dict_fn = f"{model_state_dicts_pkl_dir}/{epoch}.model_state_dicts.pkl.gz"
             with gzip.open(epoch_state_dict_fn, 'wb') as fh:
                 pickle.dump(d, fh, protocol=pickle.HIGHEST_PROTOCOL)
@@ -229,7 +234,7 @@ def save_training_data(output_dir, model, train_losses_epoch, val_losses_epoch, 
         #     pickle.dump(model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
         model_state_dicts_pkl = f"{output_dir}/model_state_dicts.pkl.gz"
         with gzip.open(model_state_dicts_pkl, 'wb') as fh:
-            pickle.dump(model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(cpu_model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
 
 def plot_model_state(model, layer_idx=1):
     with torch.no_grad():

@@ -1,0 +1,11 @@
+Epochs:   0%|          | 0/10 [00:00<?, ?it/s]Epochs:  10%|█         | 1/10 [00:01<00:11,  1.29s/it]Epochs:  20%|██        | 2/10 [00:02<00:08,  1.06s/it]Epochs:  30%|███       | 3/10 [00:03<00:07,  1.02s/it]Epochs:  40%|████      | 4/10 [00:04<00:05,  1.05it/s]Epochs:  50%|█████     | 5/10 [00:04<00:04,  1.07it/s]Epochs:  60%|██████    | 6/10 [00:05<00:03,  1.10it/s]Epochs:  70%|███████   | 7/10 [00:06<00:02,  1.10it/s]Epochs:  80%|████████  | 8/10 [00:07<00:01,  1.10it/s]Epochs:  90%|█████████ | 9/10 [00:08<00:00,  1.11it/s]Epochs: 100%|██████████| 10/10 [00:09<00:00,  1.10it/s]Epochs: 100%|██████████| 10/10 [00:09<00:00,  1.06it/s]
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 113, in <module>
+    main(
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 60, in main
+    train_losses_epoch, val_losses_epoch, test_df, model_state_dicts = full_train(
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 186, in full_train
+    save_training_data(
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 211, in save_training_data
+    for epoch, d in model_state_dicts.item():
+AttributeError: 'dict' object has no attribute 'item'. Did you mean: 'items'?
