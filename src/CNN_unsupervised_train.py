@@ -55,9 +55,10 @@ def main(
         loss_fn=contrastive_loss_fn,
         val_loss_fn=val_contrastive_loss_fn,
         plot=False, verbose=False,
+        args_expand=True,
+        split_model_states=True,
         test_loop_func=constrative_test_loop,
         margin=contrastive_loss_fn.m,
-        args_expand=True,
     )
 
 

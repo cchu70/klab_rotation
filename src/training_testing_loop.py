@@ -123,6 +123,7 @@ def full_train(
     plot=False,
     verbose=True,
     args_expand=False,
+    split_model_states=False,
     test_loop_func=test_loop,
     **test_loop_kwargs,
 ):
@@ -170,12 +171,15 @@ def full_train(
     verbose_print("done!")
 
     verbose_print("Save training data")
-    save_training_data(model_training_output_dir, model, train_losses_epoch, val_losses_epoch, test_df, model_state_dicts)
+    save_training_data(
+        model_training_output_dir, model, train_losses_epoch, val_losses_epoch, test_df, model_state_dicts, 
+        split_model_states=split_model_states
+    )
 
 
     return train_losses_epoch, val_losses_epoch, test_df, model_state_dicts
 
-def save_training_data(output_dir, model, train_losses_epoch, val_losses_epoch, test_df, model_state_dicts):
+def save_training_data(output_dir, model, train_losses_epoch, val_losses_epoch, test_df, model_state_dicts, split_model_states=False):
     model_attr_fn = f"{output_dir}/model_attr.pkl"
     save_model_attr(model, model_attr_fn)
 
@@ -190,12 +194,30 @@ def save_training_data(output_dir, model, train_losses_epoch, val_losses_epoch, 
     stack_training_losses_df.to_csv(stack_training_losses_fn, sep='\t')
     stack_val_losses_df.to_csv(stack_val_losses_fn, sep='\t')
 
-    model_state_dicts_pkl = f"{output_dir}/model_state_dicts.pkl.gz"
-    # with open(model_state_dicts_pkl, 'wb') as fh:
-    #     pickle.dump(model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
+    if split_model_states:
+        model_state_dicts_pkl_dir = f"{output_dir}/model_state_dicts"
+        if not os.path.exists(model_state_dicts_pkl_dir):
+            os.mkdir(model_state_dicts_pkl_dir)
 
-    with gzip.open(model_state_dicts_pkl, 'wb') as fh:
-        pickle.dump(model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
+        fns = []
+        for epoch, d in model_state_dicts.items():
+            epoch_state_dict_fn = f"{model_state_dicts_pkl_dir}/{epoch}.model_state_dicts.pkl.gz"
+            with gzip.open(epoch_state_dict_fn, 'wb') as fh:
+                pickle.dump(d, fh, protocol=pickle.HIGHEST_PROTOCOL)
+
+            fns.append(epoch_state_dict_fn)
+
+        model_state_dict_fns_fn = f"{output_dir}/model_state_dicts.txt"
+        with open(model_state_dict_fns_fn, mode='wt', encoding='utf-8') as fh:
+            fh.write('\n'.join(fns))
+
+
+    else:
+        # with open(model_state_dicts_pkl, 'wb') as fh:
+        #     pickle.dump(model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
+        model_state_dicts_pkl = f"{output_dir}/model_state_dicts.pkl.gz"
+        with gzip.open(model_state_dicts_pkl, 'wb') as fh:
+            pickle.dump(model_state_dicts, fh, protocol=pickle.HIGHEST_PROTOCOL)
 
 def plot_model_state(model, layer_idx=1):
     with torch.no_grad():
