@@ -4,6 +4,7 @@ from training_testing_loop import full_train
 from load_MNIST import load_MNIST
 from load_CIFAR10 import get_train_valid_loader, get_test_loader
 from torch import nn
+import torch
 import argparse
         
 
@@ -30,6 +31,7 @@ def main(
         test_dataloader = get_test_loader(data_dir='./data', batch_size=batch_size)
         assert in_channels == 3
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_args = dict(
          num_training_iter=num_training_iter, 
          num_classes=num_classes, 
@@ -37,6 +39,7 @@ def main(
          verbose=False, 
          random_seed=seed,
          in_channels=in_channels,
+         device=device
     )
     
     if prune_model_type=="NoPrune":
@@ -51,8 +54,8 @@ def main(
     if output_dir is None:
         raise ValueError("Set an output directory")
 
-    loss_fn = nn.CrossEntropyLoss()
-    val_loss_fn = nn.CrossEntropyLoss(reduction='sum')
+    loss_fn = nn.CrossEntropyLoss().to(device)
+    val_loss_fn = nn.CrossEntropyLoss(reduction='sum').to(device)
 
     train_losses_epoch, val_losses_epoch, test_df, model_state_dicts = full_train(
         model, train_dataloader, val_dataloader, test_dataloader,

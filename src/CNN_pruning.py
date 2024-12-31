@@ -24,8 +24,8 @@ class Conv2dWithActivity(nn.Conv2d):
 
     def forward(self, input):
         # Apply the activity array to the kernel
-        kernel = self.weight * self.activity.view(self.out_channels, 1, 1, 1)
-        return self._conv_forward(input, kernel.to(input.device), self.bias.to(input.device))
+        kernel = self.weight.to(input.device) * self.activity.to(input.device).view(self.out_channels, 1, 1, 1)
+        return self._conv_forward(input, kernel.to(input.device), self.bias.to(input.device)).to(input.device)
         
 class MiniAlexNet(nn.Module):
     '''
@@ -43,28 +43,28 @@ class MiniAlexNet(nn.Module):
     
     Thus, to prune kernels, we are removing some of the 64 3Dx5Wx5H kernels. In Stothers 2019 he uses the L2 norm as signal for activity of a kernel.
     '''
-    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3):
+    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3, device='cuda:0'):
         super().__init__()
 
         # conv layer 1. input 32x32
         self.conv1 = Conv2dWithActivity(
             in_channels=in_channels, out_channels=64, kernel_size=5, stride=1, padding=2
-        )
-        self.bn1 = nn.BatchNorm2d(64)
-        self.pool1 = nn.MaxPool2d(kernel_size=3, stride=3, padding=0) # --> 10x10
+        ).to(device)
+        self.bn1 = nn.BatchNorm2d(64).to(device)
+        self.pool1 = nn.MaxPool2d(kernel_size=3, stride=3, padding=0).to(device) # --> 10x10
 
         # conv layer 2
-        self.conv2 = Conv2dWithActivity(in_channels=64, out_channels=256, kernel_size=5, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(256)
-        self.pool2 = nn.MaxPool2d(kernel_size=3, stride=2, padding=0)
+        self.conv2 = Conv2dWithActivity(in_channels=64, out_channels=256, kernel_size=5, stride=1, padding=1).to(device)
+        self.bn2 = nn.BatchNorm2d(256).to(device)
+        self.pool2 = nn.MaxPool2d(kernel_size=3, stride=2, padding=0).to(device)
 
         # fully connected layers
-        self.fc1 = nn.Linear(256 * 3 * 3, 384)
-        self.fc2 = nn.Linear(384, 192)
-        self.fc3 = nn.Linear(192, num_classes)
+        self.fc1 = nn.Linear(256 * 3 * 3, 384).to(device)
+        self.fc2 = nn.Linear(384, 192).to(device)
+        self.fc3 = nn.Linear(192, num_classes).to(device)
 
-        self.dropout1 = nn.Dropout(0.5) # dropout2d?
-        self.dropout2 = nn.Dropout(0.5)
+        self.dropout1 = nn.Dropout(0.5).to(device) # dropout2d?
+        self.dropout2 = nn.Dropout(0.5).to(device)
 
         # initalization
         torch.nn.init.xavier_uniform_(self.conv1.weight)
@@ -107,6 +107,10 @@ class MiniAlexNet(nn.Module):
 
     def forward(self, x):
         self.print("x = ", x.shape)
+
+        print("Input device:", x.device)
+        print("Conv1 device:", self.conv1(x).device)
+        print("BN1 weight device:", self.bn1.weight.device)
 
         # 32x32x3 --> 32x32x64 --> 10x10x64
         x = F.relu(self.bn1(self.conv1(x)))
@@ -160,10 +164,10 @@ class MiniAlexNet(nn.Module):
 
 class RandomPruneNet(MiniAlexNet):
 
-    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3):
+    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3, device="cuda:0"):
         super().__init__(
             num_training_iter=num_training_iter, num_classes=num_classes, gamma=gamma, 
-            verbose=verbose, random_seed=random_seed, in_channels=in_channels
+            verbose=verbose, random_seed=random_seed, in_channels=in_channels, device=device
         )
         self.use_grow_prune_prob = True
 
@@ -185,10 +189,10 @@ class RandomPruneNet(MiniAlexNet):
 
 class ActivityPruneNet(MiniAlexNet):
 
-    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3):
+    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3, device="cuda:0"):
         super().__init__(
             num_training_iter=num_training_iter, num_classes=num_classes, gamma=gamma, 
-            verbose=verbose, random_seed=random_seed, in_channels=in_channels
+            verbose=verbose, random_seed=random_seed, in_channels=in_channels, device=device
         )
         self.use_grow_prune_prob = True
     

@@ -133,7 +133,7 @@ def full_train(
     **test_loop_kwargs,
 ):
     
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f"device={device}")
     model = model.to(device=device)
 
