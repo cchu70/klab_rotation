@@ -9,7 +9,7 @@ import argparse
 
 def main(
     dataset, batch_size=32, subset_fraction=0.5, validation_ratio=6,
-    num_training_iter=100, num_classes=10, prune_model_type="None",  
+    num_training_iter=100, num_classes=10, prune_model_type="NoPrune",  
     learning_rate=1e-3, gamma=0.1,
     output_dir=None,
     seed=42,
@@ -62,7 +62,7 @@ def main(
         loss_fn=loss_fn,
         val_loss_fn=val_loss_fn,
         plot=False, verbose=False,
-        args_expand=False,
+        args_expand=False, # single tensor as X (not pair, like in the unsupervised experiements)
         split_model_states=True,
     )
 
@@ -74,7 +74,6 @@ if __name__ == "__main__":
     parser.add_argument("--in_channels", type=int, default=3, help="number of channels in the images of the dataset. (see --dataset)")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size for dataloader")
     parser.add_argument("--subset_fraction", type=float, default=0.5, help="Fraction of dataset to train on")
-    parser.add_argument("--selected_labels", default="49", help="string of single digits to classify (e.g. '4,9')")
     parser.add_argument("--validation_ratio", type=int, default=6, help="1/N for validation")
     
     # CNN model to train
@@ -91,18 +90,14 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    selected_labels = [int(i) for i in args.selected_labels]
-
     parameters_abbr = {
         "ds": args.dataset,
         "ic": args.in_channels,
         "bs": args.batch_size, 
         "sf": args.subset_fraction, 
-        "sl": args.selected_labels, 
         "vr": args.validation_ratio, 
         "nti": args.num_training_iter, 
         "lmd": args.num_classes, 
-        "m": args.margin, 
         "pmt": args.prune_model_type,
         "g": args.gamma, 
         "lr": args.learning_rate, 
@@ -114,6 +109,7 @@ if __name__ == "__main__":
 
     main(
         dataset=args.dataset,
+        in_channels=args.in_channels,
         batch_size=args.batch_size,
         subset_fraction=args.subset_fraction,
         validation_ratio=args.validation_ratio,
@@ -124,4 +120,4 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
         output_dir=full_output_dir,
         seed=args.seed,
-    )
+    ) 

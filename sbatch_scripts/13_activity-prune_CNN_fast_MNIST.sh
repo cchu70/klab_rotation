@@ -21,4 +21,4 @@ python3 /home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py --dataset
     --prune_model_type Activity \
     --output_dir outputs/13 \
     --job_id $SLURM_JOB_ID \
-    --desc no_prune_CNN_fast
+    --desc activity_prune_CNN_fast

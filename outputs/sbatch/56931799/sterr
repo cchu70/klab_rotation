@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 105, in <module>
+    "m": args.margin, 
+AttributeError: 'Namespace' object has no attribute 'margin'

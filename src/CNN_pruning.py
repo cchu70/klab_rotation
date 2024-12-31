@@ -25,7 +25,7 @@ class Conv2dWithActivity(nn.Conv2d):
     def forward(self, input):
         # Apply the activity array to the kernel
         kernel = self.weight * self.activity.view(self.out_channels, 1, 1, 1)
-        return self._conv_forward(input, kernel, self.bias)
+        return self._conv_forward(input, kernel.to(input.device), self.bias.to(input.device))
         
 class MiniAlexNet(nn.Module):
     '''

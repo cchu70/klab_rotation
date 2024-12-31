@@ -77,7 +77,7 @@ class TrainingResults:
         plt.title(f"{self.desc} Training Losses")
         return fig, ax
     
-    def plot_pruning(self, figsize=(5, 5), height_ratios=[1, 5, 5], norm_size=None, test_err_col='test_accuracy'):
+    def plot_pruning(self, figsize=(10, 5), height_ratios=[1, 5, 5], norm_size=None, test_err_col='test_accuracy'):
         """
         test_err_col: 'test_err' (legacy) or 'test_accuracy'. See model.test_df for column names
         """

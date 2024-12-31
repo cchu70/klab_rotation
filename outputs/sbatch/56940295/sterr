@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 93, in <module>
+    selected_labels = [int(i) for i in args.selected_labels]
+AttributeError: 'Namespace' object has no attribute 'selected_labels'

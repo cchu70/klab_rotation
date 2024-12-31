@@ -27,7 +27,7 @@ def save_model_attr(model, attr_fn):
         pickle.dump(attr_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 def train_loop(
-    dataloader, model, loss_fn, optimizer, verbose_print, val_dataloader=None, val_batch_freq=10, 
+    dataloader, model, loss_fn, optimizer, verbose_print, device, val_dataloader=None, val_batch_freq=10, 
     val_loss_fn = nn.CrossEntropyLoss(reduction='sum'), args_expand=False,
 ):
     size = len(dataloader.dataset)
@@ -40,6 +40,9 @@ def train_loop(
     
     for batch, (X, y) in enumerate(dataloader):
         model.train()
+
+        X = X.to(device)
+        y = y.to(device)
         pred = model(X)
 
         # with torch.autograd.detect_anomaly():
@@ -82,7 +85,7 @@ def train_loop(
     return train_losses, val_losses, model.state_dict()
 
 def test_loop(
-    dataloader, model, loss_fn, verbose_print,
+    dataloader, model, loss_fn, verbose_print, device,
     correct_func=lambda pred, y, *args, **kwargs: (pred.argmax(1) == y).type(torch.float).sum().item(), 
     args_expand=False
 ):
@@ -97,6 +100,8 @@ def test_loop(
     
     with torch.no_grad(): # no gradients computed
         for X, y in dataloader:
+            X = X.to(device)
+            y = y.to(device)
             pred = model(X)
             if args_expand:
                 test_loss += loss_fn(*pred, y).item()
@@ -127,6 +132,11 @@ def full_train(
     test_loop_func=test_loop,
     **test_loop_kwargs,
 ):
+    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"device={device}")
+    model = model.to(device=device)
+
     verbose_print = print if verbose else lambda *x: None
 
     if not os.path.exists(model_training_output_dir):
@@ -149,7 +159,7 @@ def full_train(
     model_state_dicts = {}
     for i, t in tqdm.tqdm(enumerate(range(epochs)), desc='Epochs', total=epochs):
         train_losses, val_losses, model_state_dict = train_loop(
-            train_dataloader, model, loss_fn, optimizer, verbose_print, 
+            train_dataloader, model, loss_fn, optimizer, verbose_print, device,
             val_dataloader, val_loss_fn=val_loss_fn, args_expand=args_expand
         )
         train_losses_epoch[i] = train_losses
@@ -165,7 +175,7 @@ def full_train(
             verbose_print(f"Decision: {decision}")
             plot_model_state(model)
         
-        test_err, test_loss = test_loop_func(test_dataloader, model, val_loss_fn, verbose_print, **test_loop_kwargs)
+        test_err, test_loss = test_loop_func(test_dataloader, model, val_loss_fn, verbose_print, device, **test_loop_kwargs)
         test_df.loc[i] = [test_err, test_loss]
     
     verbose_print("done!")
