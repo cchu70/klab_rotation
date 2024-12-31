@@ -103,9 +103,16 @@ class TrainingResults:
     
     def plot_model_size_vs_performance(self, test_err_col='test_accuracy', **figkwargs):
         fig, ax = plt.subplots(**figkwargs)
+
+        x = self.model_attr[self.model_size_history_attr_name]
+        y = self.test_df[test_err_col]
+
+        if len(x) != len(y):
+            x = x[1:]
+
         sns.scatterplot(
-            x=self.model_attr[self.model_size_history_attr_name][1:],
-            y=self.test_df[test_err_col],
+            x=x,
+            y=y,
             s=5,
             ax=ax
             # hue=prune_full_results.test_df['test_accuracy'],

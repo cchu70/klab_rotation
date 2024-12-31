@@ -10,7 +10,7 @@ import argparse
 
 def main(
     dataset, batch_size=32, subset_fraction=0.5, validation_ratio=6,
-    num_training_iter=100, num_classes=10, prune_model_type="NoPrune",  
+    num_training_iter=100, num_pretraining=None, num_classes=10, prune_model_type="NoPrune",  
     learning_rate=1e-3, gamma=0.1,
     output_dir=None,
     seed=42,
@@ -18,22 +18,25 @@ def main(
 ):
     # get dataloaders
     if dataset == 'MNIST':
+        assert in_channels == 1
         train_dataloader, val_dataloader, test_dataloader = load_MNIST(
             root='./data', subset_frac=subset_fraction, 
             batch_size=batch_size, validation_ratio=validation_ratio, seed=seed
-        )
-        assert in_channels == 1
+        )        
     elif dataset == 'CIFAR10':
+        assert in_channels == 3
         train_dataloader, val_dataloader = get_train_valid_loader(
             data_dir='./data/', batch_size=batch_size, random_seed=seed, 
             augment=False, download=True, subsample_frac=subset_fraction
         )
         test_dataloader = get_test_loader(data_dir='./data', batch_size=batch_size)
-        assert in_channels == 3
+    else:
+        raise ValueError(f"dataset {dataset} is not valid. Use MNIST or CIFAR10")
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_args = dict(
          num_training_iter=num_training_iter, 
+         num_pretraining=num_pretraining,
          num_classes=num_classes, 
          gamma=gamma, 
          verbose=False, 
@@ -81,8 +84,9 @@ if __name__ == "__main__":
     
     # CNN model to train
     parser.add_argument("--prune_model_type", type=str, default="None", help="Activity, Random, or NoPrune")
-    parser.add_argument("--gamma", type=float, default=0.1, help="Pruning amount")
-    parser.add_argument("--num_training_iter", type=int, default=100, help="Number of epochs of training. Sets pruning rate")
+    parser.add_argument("--gamma", type=float, default=0.1, help="percentage of active of kernels to prune per convolutional layer at each pruning step.")
+    parser.add_argument("--num_training_iter", type=int, default=100, help="Number of epochs of training")
+    parser.add_argument("--num_pretraining", type=int, default=None, help="Number of epochs of pretraining with no pruning")
     parser.add_argument("--num_classes", type=int, default=10, help="Number of classes for final classification")
 
     parser.add_argument("--learning_rate", type=float, default=1e-3, help="SGD rate")
@@ -99,7 +103,8 @@ if __name__ == "__main__":
         "bs": args.batch_size, 
         "sf": args.subset_fraction, 
         "vr": args.validation_ratio, 
-        "nti": args.num_training_iter, 
+        "nti": args.num_training_iter,
+        'np': args.num_pretraining, 
         "lmd": args.num_classes, 
         "pmt": args.prune_model_type,
         "g": args.gamma, 
@@ -117,6 +122,7 @@ if __name__ == "__main__":
         subset_fraction=args.subset_fraction,
         validation_ratio=args.validation_ratio,
         num_training_iter=args.num_training_iter,
+        num_pretraining=args.num_pretraining,
         num_classes=args.num_classes,
         gamma=args.gamma,
         prune_model_type=args.prune_model_type,

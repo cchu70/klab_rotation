@@ -43,8 +43,11 @@ class MiniAlexNet(nn.Module):
     
     Thus, to prune kernels, we are removing some of the 64 3Dx5Wx5H kernels. In Stothers 2019 he uses the L2 norm as signal for activity of a kernel.
     '''
-    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3, device='cuda:0'):
+    def __init__(self, num_training_iter, num_pretraining=None, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3, device='cuda:0'):
         super().__init__()
+
+        num_pretraining = num_training_iter if num_pretraining is None else num_pretraining
+        assert num_pretraining <= num_training_iter
 
         # conv layer 1. input 32x32
         self.conv1 = Conv2dWithActivity(
@@ -73,7 +76,7 @@ class MiniAlexNet(nn.Module):
         torch.nn.init.xavier_uniform_(self.fc2.weight)
         torch.nn.init.xavier_uniform_(self.fc3.weight)
 
-        # prune proportion
+        # prune NUMBER of kernels (NOT proportion)
         self.gamma = gamma
         
         self.verbose = verbose
@@ -85,6 +88,8 @@ class MiniAlexNet(nn.Module):
         self.conv1_kernel_count_history = []
         self.conv2_kernel_count_history = []
         self.num_training_iter = num_training_iter
+        self.num_pretraining = num_pretraining
+        self.curr_training_epoch = 0 # for tracking
 
         self.random_seed = random_seed
         np.random.seed(seed=random_seed)
@@ -143,26 +148,33 @@ class MiniAlexNet(nn.Module):
         pass
 
     def update_params(self):
-        decision = bernoulli.rvs(self.prune_prob, size=1)[0]
+        # decision = bernoulli.rvs(self.prune_prob, size=1)[0]
+        decision = 0.0
         self.prune_prob_history.append(self.prune_prob)
         
-        if self.use_grow_prune_prob:
-            if decision == 1.0:
+        if self.use_grow_prune_prob: 
+            if self.curr_training_epoch > self.num_pretraining:
+                print(f"Pruning: curr ={self.curr_training_epoch} > num_pretraining={self.num_pretraining}")
                 self.prune_kernels()
-            self.prune_prob = np.min([self.prune_prob + (1.0 / self.num_training_iter), 1.0])
+                decision = 1.0
+                # self.prune_prob = np.min([self.prune_prob + (1.0 / self.num_training_iter), 1.0])
+            else:
+                print(f"No Pruning: curr ={self.curr_training_epoch} <= num_pretraining={self.num_pretraining}")
 
         # update growth parameters
         self.prune_history.append(decision)
         self.conv1_kernel_count_history.append((self.conv1.activity.view(-1) == 1.0).sum().item())
         self.conv2_kernel_count_history.append((self.conv2.activity.view(-1) == 1.0).sum().item())
 
+        self.curr_training_epoch += 1
+
         return decision
 
 class RandomPruneNet(MiniAlexNet):
 
-    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3, device="cuda:0"):
+    def __init__(self, num_training_iter, num_pretraining=None, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3, device="cuda:0"):
         super().__init__(
-            num_training_iter=num_training_iter, num_classes=num_classes, gamma=gamma, 
+            num_training_iter=num_training_iter, num_pretraining=num_pretraining, num_classes=num_classes, gamma=gamma, 
             verbose=verbose, random_seed=random_seed, in_channels=in_channels, device=device
         )
         self.use_grow_prune_prob = True
@@ -185,9 +197,9 @@ class RandomPruneNet(MiniAlexNet):
 
 class ActivityPruneNet(MiniAlexNet):
 
-    def __init__(self, num_training_iter, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3, device="cuda:0"):
+    def __init__(self, num_training_iter, num_pretraining=None, num_classes=10, gamma=0.1, verbose=False, random_seed=1, in_channels=3, device="cuda:0"):
         super().__init__(
-            num_training_iter=num_training_iter, num_classes=num_classes, gamma=gamma, 
+            num_training_iter=num_training_iter, num_pretraining=num_pretraining, num_classes=num_classes, gamma=gamma, 
             verbose=verbose, random_seed=random_seed, in_channels=in_channels, device=device
         )
         self.use_grow_prune_prob = True
