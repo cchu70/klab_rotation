@@ -1,0 +1,30 @@
+Epochs:   0%|          | 0/250 [00:00<?, ?it/s]Epochs:   0%|          | 1/250 [00:03<13:56,  3.36s/it]Epochs:   1%|          | 2/250 [00:06<12:18,  2.98s/it]Epochs:   1%|          | 3/250 [00:08<11:39,  2.83s/it]Epochs:   2%|▏         | 4/250 [00:11<11:17,  2.75s/it]Epochs:   2%|▏         | 5/250 [00:14<11:07,  2.72s/it]Epochs:   2%|▏         | 6/250 [00:16<11:02,  2.72s/it]Epochs:   2%|▏         | 6/250 [00:19<13:12,  3.25s/it]
+Traceback (most recent call last):
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/numpy/core/fromnumeric.py", line 59, in _wrapfunc
+    return bound(*args, **kwds)
+TypeError: argsort() missing 1 required positional arguments: "stable"
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 113, in <module>
+    main(
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_SUPERVISED_train.py", line 60, in main
+    train_losses_epoch, val_losses_epoch, test_df, model_state_dicts = full_train(
+  File "/home/clc926/Desktop/klab_rotation/src/training_testing_loop.py", line 174, in full_train
+    decision = model.update_params()
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_pruning.py", line 151, in update_params
+    self.prune_kernels()
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_pruning.py", line 217, in prune_kernels
+    self.prune_activity_conv2d(conv2d)
+  File "/home/clc926/Desktop/klab_rotation/src/CNN_pruning.py", line 210, in prune_activity_conv2d
+    dead_idx = np.argsort(L2[alive_idx.view(-1)])[:num_prune]
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/numpy/core/fromnumeric.py", line 1133, in argsort
+    return _wrapfunc(a, 'argsort', axis=axis, kind=kind, order=order)
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/numpy/core/fromnumeric.py", line 68, in _wrapfunc
+    return _wrapit(obj, method, *args, **kwds)
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/numpy/core/fromnumeric.py", line 45, in _wrapit
+    result = getattr(asarray(obj), method)(*args, **kwds)
+  File "/home/clc926/.conda/envs/klab_env/lib/python3.10/site-packages/torch/_tensor.py", line 1062, in __array__
+    return self.numpy()
+TypeError: can't convert cuda:0 device type tensor to numpy. Use Tensor.cpu() to copy the tensor to host memory first.

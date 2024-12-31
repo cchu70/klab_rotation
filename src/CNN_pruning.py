@@ -207,7 +207,7 @@ class ActivityPruneNet(MiniAlexNet):
             alive_idx = torch.argwhere(conv2d.activity == 1.0)
             num_prune = int(len(alive_idx) * self.gamma)
     
-            dead_idx = np.argsort(L2[alive_idx.view(-1)])[:num_prune]
+            dead_idx = torch.argsort(L2[alive_idx.view(-1)])[:num_prune]
             conv2d.activity[alive_idx.view(-1)[dead_idx]] = 0.0
         
     def prune_kernels(self):
