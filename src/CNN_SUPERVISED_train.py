@@ -1,4 +1,4 @@
-from simple_pruning_growth_model import ContrastiveLoss, constrative_test_loop
+from simple_pruning_growth_model import ContrastiveLoss, contrastive_test_loop
 from CNN_pruning import MiniAlexNet, RandomPruneNet, ActivityPruneNet
 from training_testing_loop import full_train
 from load_MNIST import load_MNIST

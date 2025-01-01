@@ -1,4 +1,4 @@
-from .simple_pruning_growth_model import PruneGrowNetwork, DrLIMPruneGrowNetwork, ContrastiveLoss, constrative_test_loop
+from .simple_pruning_growth_model import PruneGrowNetwork, DrLIMPruneGrowNetwork, ContrastiveLoss, contrastive_test_loop
 from .CNN_pruning import MiniAlexNet, ActivityPruneNet, RandomPruneNet, DrLIMMiniAlexNet, DrLIMActivityPruneNet, DrLIMRandomPruneNet
 from .training_testing_loop import full_train, save_model_attr, format_training_outputs
 from .load_MNIST import get_mnist_pairs_loader

@@ -41,7 +41,7 @@ def train_loop(
     for batch, (X, y) in enumerate(dataloader):
         model.train()
 
-        X = X.to(device)
+        X = [x.to(device) for x in X] if args_expand else X.to(device)
         y = y.to(device)
         pred = model(X)
 
@@ -73,7 +73,7 @@ def train_loop(
                 val_loss = 0.
                 num_data = 0.0
                 for val_batch, (X_val, y_val) in enumerate(val_dataloader):
-                    X_val = X_val.to(device)
+                    X_val = X = [x.to(device) for x in X_val] if args_expand else X_val.to(device)
                     y_val = y_val.to(device)
                     pred = model(X_val)
                     if args_expand:
@@ -102,7 +102,7 @@ def test_loop(
     
     with torch.no_grad(): # no gradients computed
         for X, y in dataloader:
-            X = X.to(device)
+            X = [x.to(device) for x in X] if args_expand else X.to(device)
             y = y.to(device)
             pred = model(X)
             if args_expand:

@@ -261,7 +261,7 @@ class ContrastiveLoss(nn.Module):
             return torch.mean(L)
         
 
-def constrative_test_loop(dataloader, model, loss_fn, verbose_print, margin):
+def contrastive_test_loop(dataloader, model, loss_fn, verbose_print, device, margin):
     # set to evaluation mode
     model.eval()
     size = len(dataloader.dataset)
@@ -270,6 +270,8 @@ def constrative_test_loop(dataloader, model, loss_fn, verbose_print, margin):
     
     with torch.no_grad(): # no gradients computed
         for X, y in dataloader:
+            X = X.to(device) if torch.is_tensor(X) else [x.to(device) for x in X]
+            y = y.to(device)
             pred = model(X)
             test_loss += loss_fn(*pred, y).item()
 

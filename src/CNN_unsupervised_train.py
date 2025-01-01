@@ -1,4 +1,4 @@
-from simple_pruning_growth_model import ContrastiveLoss, constrative_test_loop
+from simple_pruning_growth_model import ContrastiveLoss, contrastive_test_loop
 from CNN_pruning import DrLIMMiniAlexNet, DrLIMRandomPruneNet, DrLIMActivityPruneNet
 from training_testing_loop import full_train
 from load_MNIST import get_mnist_pairs_loader
@@ -8,7 +8,7 @@ import argparse
 
 def main(
     batch_size=32, subset_fraction=0.5, selected_labels=[4,9], validation_ratio=6,
-    num_training_iter=100, low_mapping_dim=2, prune_model_type="None", margin=5, 
+    num_training_iter=100, num_pretraining=100, low_mapping_dim=2, prune_model_type="None", margin=5, 
     learning_rate=1e-3, gamma=0.1,
     output_dir=None,
     seed=42,
@@ -16,6 +16,7 @@ def main(
 ):
     model_args = dict(
          num_training_iter=num_training_iter, 
+         num_pretraining=num_pretraining,
          num_classes=low_mapping_dim, 
          gamma=gamma, 
          verbose=False, 
@@ -57,7 +58,7 @@ def main(
         plot=False, verbose=False,
         args_expand=True,
         split_model_states=True,
-        test_loop_func=constrative_test_loop,
+        test_loop_func=contrastive_test_loop,
         margin=contrastive_loss_fn.m,
     )
 
@@ -74,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("--prune_model_type", type=str, default="None", help="Activity, Random, or NoPrune")
     parser.add_argument("--gamma", type=float, default=0.1, help="Pruning amount")
     parser.add_argument("--num_training_iter", type=int, default=100, help="Number of epochs of training. Sets pruning rate")
+    parser.add_argument("--num_pretraining", type=int, default=None, help="Number of epochs of pretraining with no pruning")
     parser.add_argument("--low_mapping_dim", type=int, default=2, help="Number of dimensions for final mapping")
 
     # Loss parameter
@@ -95,6 +97,7 @@ if __name__ == "__main__":
         "sl": args.selected_labels, 
         "vr": args.validation_ratio, 
         "nti": args.num_training_iter, 
+        "pt": args.num_pretraining,
         "lmd": args.low_mapping_dim, 
         "m": args.margin, 
         "pmt": args.prune_model_type,
@@ -112,6 +115,7 @@ if __name__ == "__main__":
         selected_labels=selected_labels,
         validation_ratio=args.validation_ratio,
         num_training_iter=args.num_training_iter,
+        num_pretraining=args.num_pretraining,
         low_mapping_dim=args.low_mapping_dim,
         gamma=args.gamma,
         margin=args.margin,
