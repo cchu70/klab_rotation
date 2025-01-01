@@ -16,7 +16,8 @@ conda activate klab_env
 
  # --use_grow_prune_prob False 
 python3 /home/clc926/Desktop/klab_rotation/src/CNN_unsupervised_train.py --subset_fraction 0.1 \
-    --num_training_iter 250 \
+    --num_training_iter 100 \
+    --num_pretraining 75 \
     --prune_model_type Random \
     --margin 5 \
     --output_dir outputs/12/ \

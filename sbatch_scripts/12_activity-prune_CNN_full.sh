@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH -c 1
+#SBATCH -c 2
 #SBATCH -t 0-03:00
 #SBATCH -p gpu
 #SBATCH --gres=gpu:1
-#SBATCH --mem 5G
+#SBATCH --mem 8G
 #SBATCH -o outputs/sbatch/%j/stdout
 #SBATCH -e outputs/sbatch/%j/sterr
 #SBATCH --mail-type=FAIL
@@ -16,7 +16,8 @@ conda activate klab_env
 
  # --use_grow_prune_prob False 
 python3 /home/clc926/Desktop/klab_rotation/src/CNN_unsupervised_train.py --subset_fraction 0.1 \
-    --num_training_iter 250 \
+    --num_training_iter 100 \
+    --num_pretraining 75 \
     --prune_model_type Activity \
     --margin 5 \
     --output_dir outputs/12/ \
