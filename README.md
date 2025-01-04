@@ -5,6 +5,24 @@
 3. Implement growth
 4. Implement pruning
 
+# Files (as of 2025-01-04)
+
+- `README.md` - Notes during development and information on how I set up my environments on the HMS O2 cluster to run scripts interactively or on GPUs
+environment.yml - YAML file with the package dependencies used during training.
+- `data/` - MNIST and CIFAR10 data downloads
+- `o2_setup/` - environment and scripts to run a jupyter notebook on a GPU interactively
+- outputs/ - Training outputs of most experiments. Numbered directories (e.g. `outputs/10/` ) correspond to outputs of the scripts in sbatch_scripts/ (e.g. `sbatch_scripts/10_no-prune_linear_fast.sh`). Subdirectory names are formatted to contain the training parameters used when running the sbatch script. Outputs are visualized in the corresponding jupyter notebook named with the same prefix (e.g. `10_Simple-MLP-unsupervised-SBATCH.ipynb`).
+- `outputs/sbatch/` - stdout and stderr for most sbatch jobs.
+- `sbatch_scripts/` - bash scripts to train models. Prefixes on the script name correspond to the jupyter notebook that shares the same prefix.
+- `src/` - Source code for defining models and training/testing loops
+    - `src/simple_pruning_growth_model.py` - All MLP models and contrastive loss
+    - `src/CNN_pruning.py` - All MiniAlexNet models
+    - `src/training_testing_loop.py` - General code for training and testing
+    - `src/training_results.py` - Reloading trained models and plotting figures
+    - `src/load_CIFAR10.py` and `src/load_MNIST.py` - code for creating dataloaders
+    - `src/CNN_SUPERVISED_train.py` and `src/simple_mlp_SUPERVISED_train.py` - python scripts for training MiniAlexNet and the simple MLP for classifying MNIST digits or CIFAR10 objects (for CNN only). Used in corresponding sbatch scripts (see `sbatch_scripts/`).
+    - `src/CNN_unsupervised_train.py` and `src/simple_mlp_unsupervised_train.py` - python scripts for training MiniAlexNet and the simple MLP for mapping MNIST to lower dimensional space with Contrastive Loss. Used in corresponding sbatch scripts (see `sbatch_scripts/`).
+
 # Notes
 
 **2024-10-15:**
